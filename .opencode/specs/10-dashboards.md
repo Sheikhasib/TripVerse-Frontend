@@ -10,7 +10,7 @@
 [MVP] /agent-dashboard/my-posts           blog authoring — create/edit own posts
 [MVP] /agent-dashboard/posts/[id]/edit
 [MVP] /admin-dashboard/posts              all posts + publish/unpublish (DRAFT↔PUBLISHED)
-[LATER] /user-dashboard/payments          needs payment module
+[LATER→Step 13] /user-dashboard/payments   payment history from my-bookings — promoted in Step 13
 [LATER] /admin-dashboard/messages          contact inbox UI (backend GET /api/contact + PATCH /:id already done)
 [LATER] /admin-dashboard/categories        category is a real table (backend CRUD exists: GET/POST /api/categories, PATCH/DELETE /:id) — build only if time permits; not needed for MVP
 ```
