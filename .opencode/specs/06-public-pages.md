@@ -2,12 +2,14 @@
 
 ## `(publicGroup)`
 ```
-[MVP]   /                         Home — hero + 8 sections, reuse GearUp's section components
+[MVP]   /                         Home — hero + 8 sections (incl. Categories + Blogs), reuse GearUp's section components
 [MVP]   /packages                 was /gears — explore/listing: search, filter, sort, pagination
 [MVP]   /packages/[slug]          was /gears/[id] — details page
 [MVP]   /packages/[slug]/reviews  was /gears/[id]/reviews
+[MVP]   /blog                     blog listing — PUBLISHED posts only, search/sort/pagination
+[MVP]   /blog/[slug]              blog detail — server-rendered long-form content
 [MVP]   /about
-[MVP]   /contact                  form only for MVP; persistence is [LATER] (needs ContactMessage backend)
+[MVP]   /contact                  form POSTs to /api/contact (public) — backend persists ContactMessage + sends a Resend email; admin inbox UI is [LATER]
 [MVP]   /help                      static content page
 [MVP]   /privacy
 [MVP]   /profile                   view/edit own profile
@@ -16,6 +18,8 @@
 [LATER] /settings                  not in requirements doc — skip for MVP
 [LATER] /payment, /payment/success, /payment/cancel   — only needed once SSLCommerz backend module is built
 ```
+
+Blog is MVP because the backend module is MVP (Step 11): public listing/detail hit `GET /api/blog` / `GET /api/blog/:slug` (PUBLISHED + not-deleted only), and the landing Blogs section renders the 3-4 seeded posts. **Dependency note:** the blog module (and dashboard module) are in the backend spec but not built yet — if `/api/blog` isn't live by Step 6, render the Blogs section from a graceful empty state and finish the wiring once the endpoint lands.
 
 ## App Router conventions (per route segment where relevant)
 - `loading.tsx` — skeleton loader, ties into the requirement-doc's skeleton-loader checkbox.

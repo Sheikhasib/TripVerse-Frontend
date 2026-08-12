@@ -44,4 +44,4 @@ All in `.env.local` (gitignored — never commit secrets). See `.env.example` fo
 ## Notable absences
 
 - No test framework, no CI yet.
-- Blog pages, contact-message persistence, and `/terms` are explicitly cut from the MVP (see `12-explicitly-cut.md`).
+- `/terms`, wishlist, payment pages, categories manager, and the admin contact inbox are explicitly cut from the MVP (see `12-explicitly-cut.md`). Blog pages and contact-message persistence are **in** the MVP — the backend ships those modules (blog and contact), and the seed provides demo posts.

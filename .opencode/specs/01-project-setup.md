@@ -40,8 +40,10 @@ NEXT_PUBLIC_BACKEND_API_URL=http://localhost:4000      # client-side, must match
 JWT_ACCESS_SECRET=...                                   # MUST match backend exactly
 JWT_REFRESH_SECRET=...                                  # MUST match backend exactly
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=...                        # optional; Google button hidden when unset (Step 5)
 ```
 `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` are used by `proxy.ts` (Step 4) to verify tokens without calling the backend on every request. If these don't match the backend's secrets exactly, every token is rejected and all dashboard routes redirect to `/login`.
+`NEXT_PUBLIC_GOOGLE_CLIENT_ID` must be the same Google OAuth client as the backend's `GOOGLE_CLIENT_ID` (it's the audience the backend verifies against) when Google login is enabled.
 
 ## `next.config.ts`
 - `images.remotePatterns` — must include `res.cloudinary.com`, or package photos break.
