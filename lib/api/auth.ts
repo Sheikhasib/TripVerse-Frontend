@@ -53,10 +53,18 @@ const googleLogin = (idToken: string) =>
     body: { idToken },
   })
 
-const logout = () =>
-  apiClient<null>("/api/auth/logout", {
-    method: "POST",
-  })
+const logout = async () => {
+  try {
+    return await apiClient<null>("/api/auth/logout", {
+      method: "POST",
+    })
+  } finally {
+    // The backend clears the httpOnly cookies, but the client-readable
+    // accessTokenClient cookie is set via document.cookie and can only be
+    // cleared here.
+    clearAccessTokenClient()
+  }
+}
 
 const me = () => apiClient<TAuthUser>("/api/auth/me")
 

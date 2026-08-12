@@ -107,6 +107,9 @@ export async function proxy(request: NextRequest) {
 
   let auth: { token: string; role: string } | null = null
   let refreshedPair: TTokenPair | null = null
+  // True when a refresh attempt failed due to a transient error (network/5xx).
+  // The refresh token may still be valid, so cookies must NOT be cleared.
+  let refreshFailedTransiently = false
 
   const verify = (token: string) => {
     const result = jwtUtils.verifyToken(
@@ -127,25 +130,32 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!auth && refreshToken) {
-    const pair = await getNewAccessToken(refreshToken)
-    if (pair) {
-      const role = verify(pair.accessToken)
+    const result = await getNewAccessToken(refreshToken)
+    if (result.status === "ok") {
+      const role = verify(result.tokenPair.accessToken)
       if (role !== null) {
-        auth = { token: pair.accessToken, role }
-        refreshedPair = pair
+        auth = { token: result.tokenPair.accessToken, role }
+        refreshedPair = result.tokenPair
       }
+    } else if (result.status === "error") {
+      refreshFailedTransiently = true
     }
   }
 
   const authenticated = auth !== null
   const hadCookies = Boolean(accessToken || refreshToken)
+  // Clear stale cookies only when the user is definitively unauthenticated
+  // (both tokens rejected). A transient refresh failure must not log them out.
+  const clearStaleCookies = !authenticated && hadCookies && !refreshFailedTransiently
 
   // 1. Auth routes: authenticated users go straight to their dashboard.
   if (isAuthPath(pathname)) {
     if (authenticated) {
-      return NextResponse.redirect(
+      const response = NextResponse.redirect(
         new URL(ROLE_DASHBOARD[auth!.role] ?? "/", request.url),
       )
+      attachCookies(response, refreshedPair, false)
+      return response
     }
     return NextResponse.next()
   }
@@ -153,7 +163,7 @@ export async function proxy(request: NextRequest) {
   // 2. Public routes: always accessible.
   if (isPublicPath(pathname)) {
     const response = NextResponse.next()
-    attachCookies(response, refreshedPair, !authenticated && hadCookies)
+    attachCookies(response, refreshedPair, clearStaleCookies)
     return response
   }
 
@@ -162,7 +172,7 @@ export async function proxy(request: NextRequest) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirectTo", pathname)
     const response = NextResponse.redirect(loginUrl)
-    attachCookies(response, null, true)
+    attachCookies(response, null, clearStaleCookies)
     return response
   }
 

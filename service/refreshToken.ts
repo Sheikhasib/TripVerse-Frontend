@@ -7,14 +7,23 @@ const refreshUrl = () =>
 
 export type TTokenPair = { accessToken: string; refreshToken: string }
 
+// Result of attempting to refresh an access token:
+// - "ok"       → a new token pair was issued
+// - "invalid"  → the refresh token is definitively rejected (missing/expired/
+//                revoked) — safe to clear cookies
+// - "error"    → a transient failure (network/5xx) — do NOT log the user out
+export type TRefreshResult =
+  | { status: "ok"; tokenPair: TTokenPair }
+  | { status: "invalid" }
+  | { status: "error" }
+
 // Calls the backend refresh endpoint with the (httpOnly) refresh token and
-// returns the rotated token pair, or null if the refresh token is
-// invalid/expired.
+// returns the rotated token pair, or a status describing the failure.
 const getNewAccessToken = async (
   refreshToken: string | undefined,
-): Promise<TTokenPair | null> => {
+): Promise<TRefreshResult> => {
   if (!refreshToken) {
-    return null
+    return { status: "invalid" }
   }
 
   let res: Response
@@ -26,7 +35,13 @@ const getNewAccessToken = async (
       cache: "no-store",
     })
   } catch {
-    return null
+    return { status: "error" }
+  }
+
+  // Server-side failures (5xx) are transient — the refresh token may still be
+  // valid, so proxy.ts must not clear cookies.
+  if (res.status >= 500) {
+    return { status: "error" }
   }
 
   const envelope = (await res.json().catch(() => null)) as
@@ -34,12 +49,15 @@ const getNewAccessToken = async (
     | null
 
   if (!res.ok || !envelope?.success || !envelope.data?.accessToken) {
-    return null
+    return { status: "invalid" }
   }
 
   return {
-    accessToken: envelope.data.accessToken,
-    refreshToken: envelope.data.refreshToken ?? refreshToken,
+    status: "ok",
+    tokenPair: {
+      accessToken: envelope.data.accessToken,
+      refreshToken: envelope.data.refreshToken ?? refreshToken,
+    },
   }
 }
 
@@ -47,10 +65,13 @@ type TTokenResult =
   | { status: "ok"; accessToken: string }
   | { status: "new"; tokenPair: TTokenPair }
   | { status: "unauthenticated" }
+  | { status: "error" }
 
 // Returns a valid access token for the request, refreshing it if the access
 // token is invalid/expired but the refresh token is still valid. Does not
 // write cookies itself — proxy.ts persists refreshed tokens to the browser.
+// "error" means a transient refresh failure — proxy.ts should keep the
+// existing cookies rather than logging the user out.
 const getAccessToken = async (
   accessToken: string | undefined,
   refreshToken: string | undefined,
@@ -66,11 +87,14 @@ const getAccessToken = async (
   }
 
   const fresh = await getNewAccessToken(refreshToken)
-  if (!fresh) {
-    return { status: "unauthenticated" }
+  if (fresh.status === "ok") {
+    return { status: "new", tokenPair: fresh.tokenPair }
+  }
+  if (fresh.status === "error") {
+    return { status: "error" }
   }
 
-  return { status: "new", tokenPair: fresh }
+  return { status: "unauthenticated" }
 }
 
 export { getAccessToken, getNewAccessToken }
