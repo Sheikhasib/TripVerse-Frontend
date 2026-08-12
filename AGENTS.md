@@ -8,7 +8,7 @@ Frontend for TripVerse (travel packages, bookings, reviews). Next.js 16 (App Rou
 
 ```bash
 npm install
-cp .env.example .env.local   # real values: BACKEND_API_URL, JWT secrets (must match server), Cloudinary cloud name
+cp .env.example .env   # real values: BACKEND_API_URL, JWT secrets (must match server), Cloudinary cloud name
 npm run dev                  # http://localhost:3000
 ```
 
@@ -34,7 +34,7 @@ npm run dev                  # http://localhost:3000
 
 ## Env vars
 
-All in `.env.local` (gitignored — never commit secrets). See `.env.example` for the full list. `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` must match `tripverse-server/.env` exactly.
+All in `.env` (gitignored — never commit secrets). See `.env.example` for the full list.
 
 ## Data sources
 

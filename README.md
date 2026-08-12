@@ -15,7 +15,7 @@ Everything from `03-auth-infra.md` onward: API client, JWT utils, refresh-token 
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env
 npm run dev
 ```
 
