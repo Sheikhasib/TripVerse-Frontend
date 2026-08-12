@@ -5,11 +5,14 @@ import { jwtUtils } from "@/utils/jwt"
 const refreshUrl = () =>
   `${process.env.BACKEND_API_URL ?? ""}/api/auth/refresh`
 
+export type TTokenPair = { accessToken: string; refreshToken: string }
+
 // Calls the backend refresh endpoint with the (httpOnly) refresh token and
-// returns the new access token, or null if the refresh token is invalid/expired.
+// returns the rotated token pair, or null if the refresh token is
+// invalid/expired.
 const getNewAccessToken = async (
   refreshToken: string | undefined,
-): Promise<string | null> => {
+): Promise<TTokenPair | null> => {
   if (!refreshToken) {
     return null
   }
@@ -27,19 +30,22 @@ const getNewAccessToken = async (
   }
 
   const envelope = (await res.json().catch(() => null)) as
-    | { success: boolean; data?: { accessToken?: string } }
+    | { success: boolean; data?: { accessToken?: string; refreshToken?: string } }
     | null
 
-  if (!res.ok || !envelope?.success) {
+  if (!res.ok || !envelope?.success || !envelope.data?.accessToken) {
     return null
   }
 
-  return envelope.data?.accessToken ?? null
+  return {
+    accessToken: envelope.data.accessToken,
+    refreshToken: envelope.data.refreshToken ?? refreshToken,
+  }
 }
 
 type TTokenResult =
   | { status: "ok"; accessToken: string }
-  | { status: "new"; accessToken: string }
+  | { status: "new"; tokenPair: TTokenPair }
   | { status: "unauthenticated" }
 
 // Returns a valid access token for the request, refreshing it if the access
@@ -64,7 +70,7 @@ const getAccessToken = async (
     return { status: "unauthenticated" }
   }
 
-  return { status: "new", accessToken: fresh }
+  return { status: "new", tokenPair: fresh }
 }
 
 export { getAccessToken, getNewAccessToken }
