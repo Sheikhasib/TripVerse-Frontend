@@ -36,10 +36,34 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const [previews, setPreviews] = useState<PreviewItem[]>(
     value.map((url) => ({ url, status: "done" })),
   )
+  // Mirrors `previews` so async upload callbacks always read the latest list —
+  // the `previews`/`value` state is stale inside their closures.
+  const previewsRef = useRef<PreviewItem[]>(previews)
 
-  const commit = useCallback(
-    (urls: string[]) => {
-      onChange(urls.slice(0, MAX_IMAGES))
+  // Applies the next preview list and commits the ordered, fully-uploaded URLs
+  // to the form. Deriving from the current list (not the initial `value`)
+  // keeps concurrent uploads from overwriting each other. onChange only fires
+  // when the committed URLs actually change (e.g. adding a file that is still
+  // uploading shouldn't re-validate the field).
+  const applyPreviews = useCallback(
+    (next: PreviewItem[]) => {
+      const prev = previewsRef.current
+      previewsRef.current = next
+      setPreviews(next)
+      const urls = next
+        .filter((p) => p.status === "done")
+        .map((p) => p.url)
+        .slice(0, MAX_IMAGES)
+      const prevUrls = prev
+        .filter((p) => p.status === "done")
+        .map((p) => p.url)
+        .slice(0, MAX_IMAGES)
+      if (
+        urls.length !== prevUrls.length ||
+        urls.some((url, index) => url !== prevUrls[index])
+      ) {
+        onChange(urls)
+      }
     },
     [onChange],
   )
@@ -54,30 +78,29 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
         toast.error("Image must be 5MB or smaller.")
         return
       }
-      if (previews.length >= MAX_IMAGES) {
+      if (previewsRef.current.length >= MAX_IMAGES) {
         toast.error(`You can add up to ${MAX_IMAGES} images.`)
         return
       }
 
       const objectUrl = URL.createObjectURL(file)
       const item: PreviewItem = { url: objectUrl, status: "uploading" }
-      const nextPreviews = [...previews, item]
-      setPreviews(nextPreviews)
+      applyPreviews([...previewsRef.current, item])
 
       uploadsApi
         .uploadImage(file)
         .then((result) => {
-          const uploaded = [...value, result.url]
-          commit(uploaded)
-          setPreviews((prev) =>
-            prev.map((p) =>
+          // Replace the object URL in place so a reorder made while the file
+          // was uploading keeps that position.
+          applyPreviews(
+            previewsRef.current.map((p) =>
               p.url === objectUrl ? { url: result.url, status: "done" } : p,
             ),
           )
           URL.revokeObjectURL(objectUrl)
         })
         .catch((error) => {
-          setPreviews((prev) => prev.filter((p) => p.url !== objectUrl))
+          applyPreviews(previewsRef.current.filter((p) => p.url !== objectUrl))
           URL.revokeObjectURL(objectUrl)
           toast.error(
             error instanceof ApiError
@@ -86,45 +109,37 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
           )
         })
     },
-    [previews, value, commit],
+    [applyPreviews],
   )
 
   const removeAt = useCallback(
     (index: number) => {
-      const item = previews[index]
+      const item = previewsRef.current[index]
       if (!item) return
       if (item.status === "uploading") {
         // Can't cancel an in-flight request, but dropping the preview keeps
-        // the user in control; the result is ignored via the url match below.
-        setPreviews((prev) => prev.filter((p) => p.url !== item.url))
+        // the user in control; the resolved URL is ignored via the url match.
+        applyPreviews(previewsRef.current.filter((p) => p.url !== item.url))
         URL.revokeObjectURL(item.url)
         return
       }
-      const nextPreviews = previews.filter((p) => p.url !== item.url)
-      const nextValue = value.filter((url) => url !== item.url)
-      setPreviews(nextPreviews)
-      commit(nextValue)
+      applyPreviews(previewsRef.current.filter((p) => p.url !== item.url))
     },
-    [previews, value, commit],
+    [applyPreviews],
   )
 
   const move = useCallback(
     (index: number, direction: -1 | 1) => {
+      const next = [...previewsRef.current]
       const target = index + direction
-      if (target < 0 || target >= previews.length) return
-      const next = [...previews]
+      if (target < 0 || target >= next.length) return
       const [item] = next.splice(index, 1)
       next.splice(target, 0, item)
-      setPreviews(next)
-      // Commit the reordered URLs that are already uploaded (skip any in-flight
-      // local files, which commit themselves when they finish).
-      commit(
-        next
-          .map((p) => p.url)
-          .filter((url) => value.includes(url)),
-      )
+      // Commits the reordered, already-uploaded URLs; in-flight files keep
+      // their (possibly new) position and commit themselves on completion.
+      applyPreviews(next)
     },
-    [previews, value, commit],
+    [applyPreviews],
   )
 
   return (

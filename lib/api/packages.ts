@@ -1,4 +1,4 @@
-import { apiClient, apiClientFull } from "./client"
+import { apiClient, apiClientFull, type TMeta } from "./client"
 import type {
   TCreatePackageSchema,
   TUpdatePackageSchema,
@@ -166,6 +166,27 @@ const deletePackage = (id: string) =>
     method: "DELETE",
   })
 
+// Fetch + find by id across ALL pages. The backend caps limit at 50, so a
+// single `limit: 50` request can't reliably resolve an id for edit pages.
+const findInPages = async (
+  fetcher: (params: TInternalPackageQuery) => Promise<{
+    data: TInternalPackage[]
+    meta?: TMeta
+  }>,
+  id: string,
+) => {
+  for (let page = 1; ; page += 1) {
+    const { data, meta } = await fetcher({ page, limit: 50 })
+    const found = data.find((pkg) => pkg.id === id)
+    if (found) return found
+    if (!meta || page >= meta.totalPages) return null
+  }
+}
+
+const findMyPackage = (id: string) => findInPages(getMyPackages, id)
+
+const findAdminPackage = (id: string) => findInPages(getAllPackages, id)
+
 export const packagesApi = {
   getList,
   getBySlug,
@@ -177,4 +198,6 @@ export const packagesApi = {
   updatePackage,
   changePackageStatus,
   deletePackage,
+  findMyPackage,
+  findAdminPackage,
 }

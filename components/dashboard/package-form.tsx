@@ -145,7 +145,10 @@ export function PackageForm({
   }
 
   const canSubmit =
-    !categoriesLoading && (categories?.length ?? 0) > 0 && !form.formState.isSubmitting
+    !categoriesLoading &&
+    (categories?.length ?? 0) > 0 &&
+    (!isEdit || form.formState.isDirty) &&
+    !form.formState.isSubmitting
 
   return (
     <Form {...form}>
@@ -157,7 +160,9 @@ export function PackageForm({
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {isEdit
-                ? "Changes are submitted for review before going live."
+                ? isAdmin
+                  ? "Changes are applied immediately without a re-approval."
+                  : "Changes are submitted for review before going live."
                 : "Fill in the details below — your package goes live once an admin approves it."}
             </p>
           </div>
@@ -177,7 +182,7 @@ export function PackageForm({
           )}
         </div>
 
-        {isEdit && packageRow && (
+        {isEdit && packageRow && !isAdmin && (
           <div className="mb-6 flex items-start gap-3 rounded-md bg-amber-500/10 p-4 text-sm text-amber-700 ring-1 ring-amber-500/20 dark:text-amber-400">
             <CheckCircle className="mt-0.5 size-4 shrink-0" />
             <p>

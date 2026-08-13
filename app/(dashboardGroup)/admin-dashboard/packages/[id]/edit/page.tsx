@@ -14,9 +14,9 @@ export default function AdminEditPackagePage() {
   const params = useParams<{ id: string }>()
   const id = params.id
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin-packages", "ALL"],
-    queryFn: () => packagesApi.getAllPackages({ limit: 50 }),
+  const { data: row, isLoading } = useQuery({
+    queryKey: ["admin-package", id],
+    queryFn: () => packagesApi.findAdminPackage(id),
     staleTime: 30 * 1000,
   })
 
@@ -35,8 +35,6 @@ export default function AdminEditPackagePage() {
       </div>
     )
   }
-
-  const row = (data?.data ?? []).find((pkg) => pkg.id === id)
 
   if (!row) {
     return (

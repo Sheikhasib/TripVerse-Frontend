@@ -14,9 +14,9 @@ export default function EditPackagePage() {
   const params = useParams<{ id: string }>()
   const id = params.id
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["my-packages"],
-    queryFn: () => packagesApi.getMyPackages({ limit: 50 }),
+  const { data: row, isLoading } = useQuery({
+    queryKey: ["my-package", id],
+    queryFn: () => packagesApi.findMyPackage(id),
     staleTime: 30 * 1000,
   })
 
@@ -35,8 +35,6 @@ export default function EditPackagePage() {
       </div>
     )
   }
-
-  const row = (data?.data ?? []).find((pkg) => pkg.id === id)
 
   if (!row) {
     return (
