@@ -72,15 +72,17 @@ export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
           {pkg.description}
         </p>
 
-        {typeof rating === "number" && reviewCount !== undefined && (
+        {typeof rating === "number" && rating > 0 && (
           <div className="flex items-center gap-1.5">
             <Star size={14} weight="fill" className="text-accent" />
             <span className="text-xs font-semibold tabular-nums">
               {rating.toFixed(1)}
             </span>
-            <span className="text-xs text-muted-foreground">
-              ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
-            </span>
+            {typeof reviewCount === "number" && reviewCount > 0 && (
+              <span className="text-xs text-muted-foreground">
+                ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+              </span>
+            )}
           </div>
         )}
 
