@@ -1,4 +1,8 @@
 import { apiClient, apiClientFull } from "./client"
+import type {
+  TCreatePackageSchema,
+  TUpdatePackageSchema,
+} from "@/lib/validations/package"
 
 export type TCategory = {
   id: string
@@ -51,6 +55,23 @@ export type TReview = {
   user: { name: string; avatarUrl?: string | null }
 }
 
+export type TPackageStatus = "PENDING" | "APPROVED" | "REJECTED"
+
+export type TInternalPackage = TPublicPackage & {
+  status: TPackageStatus
+  isDeleted: boolean
+  categoryId: string
+  agentId: string
+  agent?: { id: string; name: string; email: string }
+}
+
+export type TInternalPackageQuery = {
+  page?: number
+  limit?: number
+  status?: TPackageStatus
+  agentId?: string
+}
+
 const getList = async (params: TPublicPackageQuery = {}) => {
   const query = new URLSearchParams()
   if (params.search) query.set("search", params.search)
@@ -92,9 +113,68 @@ const getReviews = async (
   return { data: envelope.data, meta: envelope.meta }
 }
 
+// ── Internal (authenticated) management API ────────────────────────────────
+// These run client-side through the same-origin /api rewrite so the browser's
+// auth cookies reach the backend. Server components cannot call them (the
+// server-side apiClient sends no token).
+
+const buildInternalQuery = (params: TInternalPackageQuery) => {
+  const query = new URLSearchParams()
+  if (params.page) query.set("page", String(params.page))
+  if (params.limit) query.set("limit", String(params.limit))
+  if (params.status) query.set("status", params.status)
+  if (params.agentId) query.set("agentId", params.agentId)
+  return query.toString()
+}
+
+const getMyPackages = async (params: TInternalPackageQuery = {}) => {
+  const qs = buildInternalQuery(params)
+  const envelope = await apiClientFull<TInternalPackage[]>(
+    `/api/packages/internal/my-packages${qs ? `?${qs}` : ""}`,
+  )
+  return { data: envelope.data, meta: envelope.meta }
+}
+
+const getAllPackages = async (params: TInternalPackageQuery = {}) => {
+  const qs = buildInternalQuery(params)
+  const envelope = await apiClientFull<TInternalPackage[]>(
+    `/api/packages/internal/all${qs ? `?${qs}` : ""}`,
+  )
+  return { data: envelope.data, meta: envelope.meta }
+}
+
+const createPackage = (payload: TCreatePackageSchema) =>
+  apiClient<TInternalPackage>("/api/packages", {
+    method: "POST",
+    body: payload,
+  })
+
+const updatePackage = (id: string, payload: TUpdatePackageSchema) =>
+  apiClient<TInternalPackage>(`/api/packages/${id}`, {
+    method: "PATCH",
+    body: payload,
+  })
+
+const changePackageStatus = (id: string, status: "APPROVED" | "REJECTED") =>
+  apiClient<TInternalPackage>(`/api/packages/${id}/status`, {
+    method: "PATCH",
+    body: { status },
+  })
+
+const deletePackage = (id: string) =>
+  apiClient<null>(`/api/packages/${id}`, {
+    method: "DELETE",
+  })
+
 export const packagesApi = {
   getList,
   getBySlug,
   getCategories,
   getReviews,
+  getMyPackages,
+  getAllPackages,
+  createPackage,
+  updatePackage,
+  changePackageStatus,
+  deletePackage,
 }
