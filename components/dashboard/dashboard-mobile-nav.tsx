@@ -18,12 +18,18 @@ import type { TRole } from "@/lib/validations/auth"
 type NavItem = { label: string; href: string }
 
 const NAV_BY_ROLE: Record<TRole, NavItem[]> = {
-  USER: [],
+  USER: [
+    { label: "My Bookings", href: "/user-dashboard/bookings" },
+  ],
   AGENT: [
     { label: "My Packages", href: "/agent-dashboard/my-packages" },
     { label: "New Package", href: "/agent-dashboard/packages/new" },
+    { label: "Bookings", href: "/agent-dashboard/bookings" },
   ],
-  ADMIN: [{ label: "Manage Packages", href: "/admin-dashboard/packages" }],
+  ADMIN: [
+    { label: "Manage Packages", href: "/admin-dashboard/packages" },
+    { label: "Bookings", href: "/admin-dashboard/bookings" },
+  ],
 }
 
 export function DashboardMobileNav() {
