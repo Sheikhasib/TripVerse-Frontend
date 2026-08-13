@@ -1,5 +1,4 @@
-import { apiClient } from "./client"
-import type { TMeta } from "./client"
+import { apiClient, apiClientFull } from "./client"
 
 export type TCategory = {
   id: string
@@ -52,7 +51,7 @@ export type TReview = {
   user: { name: string; avatarUrl?: string | null }
 }
 
-const getList = (params: TPublicPackageQuery = {}) => {
+const getList = async (params: TPublicPackageQuery = {}) => {
   const query = new URLSearchParams()
   if (params.search) query.set("search", params.search)
   if (params.category) query.set("category", params.category)
@@ -68,9 +67,10 @@ const getList = (params: TPublicPackageQuery = {}) => {
   if (params.limit) query.set("limit", String(params.limit))
 
   const qs = query.toString()
-  return apiClient<{ data: TPublicPackage[]; meta: TMeta }>(
+  const envelope = await apiClientFull<TPublicPackage[]>(
     `/api/packages${qs ? `?${qs}` : ""}`,
   )
+  return { data: envelope.data, meta: envelope.meta }
 }
 
 const getBySlug = (slug: string) =>
@@ -78,14 +78,18 @@ const getBySlug = (slug: string) =>
 
 const getCategories = () => apiClient<TCategory[]>("/api/categories")
 
-const getReviews = (packageId: string, params: { page?: number; limit?: number } = {}) => {
+const getReviews = async (
+  packageId: string,
+  params: { page?: number; limit?: number } = {},
+) => {
   const query = new URLSearchParams()
   if (params.page) query.set("page", String(params.page))
   if (params.limit) query.set("limit", String(params.limit))
   const qs = query.toString()
-  return apiClient<{ data: TReview[]; meta: TMeta }>(
+  const envelope = await apiClientFull<TReview[]>(
     `/api/reviews/package/${packageId}${qs ? `?${qs}` : ""}`,
   )
+  return { data: envelope.data, meta: envelope.meta }
 }
 
 export const packagesApi = {

@@ -1,5 +1,4 @@
-import { apiClient } from "./client"
-import type { TMeta } from "./client"
+import { apiClient, apiClientFull } from "./client"
 
 export type TBlogAuthor = {
   id: string
@@ -29,7 +28,7 @@ export type TBlogQuery = {
   limit?: number
 }
 
-const getList = (params: TBlogQuery = {}) => {
+const getList = async (params: TBlogQuery = {}) => {
   const query = new URLSearchParams()
   if (params.search) query.set("search", params.search)
   if (params.sortBy) query.set("sortBy", params.sortBy)
@@ -38,9 +37,10 @@ const getList = (params: TBlogQuery = {}) => {
   if (params.limit) query.set("limit", String(params.limit))
 
   const qs = query.toString()
-  return apiClient<{ data: TBlogPostListItem[]; meta: TMeta }>(
+  const envelope = await apiClientFull<TBlogPostListItem[]>(
     `/api/blog${qs ? `?${qs}` : ""}`,
   )
+  return { data: envelope.data, meta: envelope.meta }
 }
 
 const getBySlug = (slug: string) => apiClient<TBlogPost>(`/api/blog/${slug}`)
