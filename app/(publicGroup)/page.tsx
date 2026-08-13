@@ -11,8 +11,28 @@ import { BlogTeaser } from "@/components/sections/blog-teaser"
 import { FaqSection } from "@/components/sections/faq"
 import { CtaBand } from "@/components/sections/cta-band"
 import type { TPublicPackage } from "@/lib/api/packages"
+import type { Metadata } from "next"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  description:
+    "Discover hand-picked tour packages — beaches, treks, heritage walks and wildlife safaris — curated by trusted local agents and booked with confidence.",
+  keywords: [
+    "tour packages",
+    "travel deals",
+    "bangladesh tours",
+    "beach vacations",
+    "wildlife safaris",
+    "heritage walks",
+  ],
+  openGraph: {
+    title: "TripVerse — Explore the World, Book with Confidence",
+    description:
+      "Discover hand-picked tour packages — beaches, treks, heritage walks and wildlife safaris — curated by trusted local agents and booked with confidence.",
+    type: "website",
+  },
+}
 
 async function getFeatured(): Promise<TPublicPackage[]> {
   try {
