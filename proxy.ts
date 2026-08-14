@@ -61,6 +61,15 @@ const ROLE_DASHBOARD: Record<string, string> = {
   ADMIN: "/admin-dashboard",
 }
 
+// Authenticated-only routes (dashboards + profile). Any other non-public
+// path is an unknown route and should show the styled not-found page.
+const PROTECTED_PREFIXES = [
+  "/user-dashboard",
+  "/agent-dashboard",
+  "/admin-dashboard",
+  "/profile",
+]
+
 const isPublicPath = (pathname: string) =>
   PUBLIC_EXACT_PATHS.includes(pathname) ||
   PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
@@ -168,7 +177,19 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. Protected routes, unauthenticated → login (preserving the target).
+  //    Unknown routes get the styled not-found page instead.
   if (!authenticated) {
+    const isProtected = PROTECTED_PREFIXES.some(
+      (prefix) =>
+        pathname === prefix || pathname.startsWith(`${prefix}/`),
+    )
+    if (!isProtected) {
+      const response = NextResponse.redirect(
+        new URL("/not-found", request.url),
+      )
+      attachCookies(response, refreshedPair, clearStaleCookies)
+      return response
+    }
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirectTo", pathname)
     const response = NextResponse.redirect(loginUrl)
