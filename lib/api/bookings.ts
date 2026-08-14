@@ -16,6 +16,7 @@ export type TPayment = {
   status: TPaymentStatus
   cardType?: string | null
   bankTranId?: string | null
+  valId?: string | null
   paidAt?: string | null
 }
 

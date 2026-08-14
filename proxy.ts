@@ -45,7 +45,7 @@ const PUBLIC_EXACT_PATHS = [
   "/not-found",
 ]
 
-const PUBLIC_PREFIXES = ["/packages", "/blog"]
+const PUBLIC_PREFIXES = ["/packages", "/blog", "/payment"]
 
 const AUTH_PATHS = ["/login", "/register"]
 

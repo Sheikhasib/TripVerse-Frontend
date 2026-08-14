@@ -11,16 +11,25 @@ type NavItem = { label: string; href: string }
 
 const NAV_BY_ROLE: Record<TRole, NavItem[]> = {
   USER: [
+    { label: "Overview", href: "/user-dashboard" },
     { label: "My Bookings", href: "/user-dashboard/bookings" },
+    { label: "Payments", href: "/user-dashboard/payments" },
+    { label: "Profile", href: "/user-dashboard/profile" },
+    { label: "Settings", href: "/user-dashboard/settings" },
   ],
   AGENT: [
+    { label: "Manager", href: "/agent-dashboard" },
     { label: "My Packages", href: "/agent-dashboard/my-packages" },
     { label: "New Package", href: "/agent-dashboard/packages/new" },
     { label: "Bookings", href: "/agent-dashboard/bookings" },
   ],
   ADMIN: [
+    { label: "Overview", href: "/admin-dashboard" },
     { label: "Manage Packages", href: "/admin-dashboard/packages" },
-    { label: "Bookings", href: "/admin-dashboard/bookings" },
+    { label: "Manage Users", href: "/admin-dashboard/users" },
+    { label: "Manage Bookings", href: "/admin-dashboard/bookings" },
+    { label: "Analytics", href: "/admin-dashboard/analytics" },
+    { label: "Settings", href: "/admin-dashboard/settings" },
   ],
 }
 

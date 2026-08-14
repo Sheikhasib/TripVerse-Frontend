@@ -3,10 +3,11 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query"
-import { Check, X, Ticket } from "@phosphor-icons/react"
+import { Check, CreditCard, X, Ticket } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { bookingsApi, type TBooking, type TBookingStatus } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
+import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
@@ -29,13 +30,6 @@ interface BookingTableProps {
   // Query keys to invalidate after a status transition (page-specific).
   invalidateKeys: QueryKey[]
 }
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(price)
 
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -199,12 +193,20 @@ export function BookingTable({
               </TableCell>
               <TableCell className="tabular-nums">{booking.travelers}</TableCell>
               <TableCell className="tabular-nums">
-                {formatPrice(Number(booking.totalPrice))}
+                {formatBDT(Number(booking.totalPrice))}
               </TableCell>
               <TableCell>
                 <BookingStatusBadge status={booking.status} />
               </TableCell>
               <TableCell className="text-right">
+                {viewer === "user" && booking.status === "PENDING" && (
+                  <Button asChild size="sm" className="mr-1">
+                    <Link href={`/user-dashboard/bookings/${booking.id}`}>
+                      <CreditCard size={14} />
+                      Pay
+                    </Link>
+                  </Button>
+                )}
                 {getActions(booking, viewer).length > 0 ? (
                   <div className="flex items-center justify-end gap-1">
                     {getActions(booking, viewer).map((action) => (

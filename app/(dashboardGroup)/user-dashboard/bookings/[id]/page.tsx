@@ -4,7 +4,15 @@ import Image from "next/image"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, CalendarBlank, MapPin, Ticket, Users, X } from "@phosphor-icons/react"
+import {
+  ArrowLeft,
+  CalendarBlank,
+  MapPin,
+  Receipt,
+  Ticket,
+  Users,
+  X,
+} from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
@@ -12,27 +20,16 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
 import { BookingStatusBadge } from "@/components/dashboard/booking-status-badge"
+import { PayNowButton } from "@/components/payment/pay-now-button"
+import { PaymentAttempts } from "@/components/payment/payment-attempts"
+import { PaymentReceipt } from "@/components/payment/payment-receipt"
+import { formatBDT, formatDate } from "@/lib/format"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(price)
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(new Date(value))
 
 export default function UserBookingDetailPage() {
   const params = useParams<{ id: string }>()
@@ -67,6 +64,7 @@ export default function UserBookingDetailPage() {
           <Skeleton className="h-64 rounded-xl lg:col-span-2" />
           <Skeleton className="h-64 rounded-xl" />
         </div>
+        <Skeleton className="h-40 rounded-xl" />
       </div>
     )
   }
@@ -90,6 +88,10 @@ export default function UserBookingDetailPage() {
     booking.status === "PENDING" ||
     booking.status === "PAID" ||
     booking.status === "CONFIRMED"
+
+  const terminalPayment =
+    booking.payments?.find((payment) => payment.status === "SUCCESS") ??
+    booking.payments?.find((payment) => payment.status === "REFUNDED")
 
   return (
     <div className="space-y-6">
@@ -163,7 +165,7 @@ export default function UserBookingDetailPage() {
                   Total price
                 </p>
                 <p className="mt-1 font-semibold tabular-nums">
-                  {formatPrice(Number(booking.totalPrice))}
+                  {formatBDT(Number(booking.totalPrice))}
                 </p>
               </div>
             </div>
@@ -175,6 +177,7 @@ export default function UserBookingDetailPage() {
             <CardTitle>Booking actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <PayNowButton booking={booking} />
             {cancellable ? (
               <Button
                 variant="outline"
@@ -190,12 +193,23 @@ export default function UserBookingDetailPage() {
                 This booking can&apos;t be cancelled.
               </p>
             )}
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Payments and receipts for this booking will appear here.
-            </p>
           </CardContent>
         </Card>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <Receipt size={18} className="text-primary" />
+          Payment
+        </h2>
+        {terminalPayment && (
+          <PaymentReceipt payment={terminalPayment} booking={booking} />
+        )}
+        <PaymentAttempts
+          payments={booking.payments ?? []}
+          isLoading={isLoading}
+        />
+      </section>
     </div>
   )
 }
