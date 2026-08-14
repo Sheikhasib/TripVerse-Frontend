@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { packagesApi, type TReview } from "@/lib/api/packages"
+import { reviewsApi, type TReview } from "@/lib/api/reviews"
 import { Rating } from "@/components/shared/rating"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EmptyState } from "@/components/shared/empty-state"
@@ -36,7 +36,7 @@ export function ReviewList({ packageId }: ReviewListProps) {
 
   const { data, isLoading } = useQuery({
     queryKey: ["reviews", packageId, page],
-    queryFn: () => packagesApi.getReviews(packageId, { page, limit: PAGE_LIMIT }),
+    queryFn: () => reviewsApi.getReviews(packageId, { page, limit: PAGE_LIMIT }),
     placeholderData: (prev) => prev,
   })
 

@@ -1,4 +1,4 @@
-import { apiClient, apiClientFull } from "./client"
+import { apiClientFull } from "./client"
 import type { TCreateReviewSchema } from "@/lib/validations/review"
 
 export type TReview = {
@@ -13,6 +13,11 @@ export type TReview = {
 export type TReviewQuery = {
   page?: number
   limit?: number
+}
+
+export type TCreateReviewResponse = {
+  review: TReview
+  rating: number
 }
 
 const buildQuery = (params: TReviewQuery = {}) => {
@@ -31,7 +36,7 @@ const getReviews = async (packageId: string, params: TReviewQuery = {}) => {
 }
 
 const createReview = async (payload: TCreateReviewSchema) => {
-  const envelope = await apiClientFull<TReview>("/api/reviews", {
+  const envelope = await apiClientFull<TCreateReviewResponse>("/api/reviews", {
     method: "POST",
     body: payload,
   })

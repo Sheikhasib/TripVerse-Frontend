@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { packagesApi } from "@/lib/api/packages"
 import { ReviewList } from "@/components/shared/review-list"
+import { ReviewForm } from "@/components/review/review-form"
 import { Rating } from "@/components/shared/rating"
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr"
 
@@ -58,6 +59,8 @@ export default async function PackageReviewsPage({ params }: PageProps) {
           What travellers say about {pkg.title}
         </p>
       </div>
+
+      <ReviewForm packageId={pkg.id} slug={slug} />
 
       <ReviewList packageId={pkg.id} />
     </div>

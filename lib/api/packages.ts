@@ -47,14 +47,6 @@ export type TPublicPackageQuery = {
   limit?: number
 }
 
-export type TReview = {
-  id: string
-  rating: number
-  comment?: string | null
-  createdAt: string
-  user: { name: string; avatarUrl?: string | null }
-}
-
 export type TPackageStatus = "PENDING" | "APPROVED" | "REJECTED"
 
 export type TInternalPackage = TPublicPackage & {
@@ -98,20 +90,6 @@ const getBySlug = (slug: string) =>
   apiClient<TPublicPackage>(`/api/packages/${slug}`)
 
 const getCategories = () => apiClient<TCategory[]>("/api/categories")
-
-const getReviews = async (
-  packageId: string,
-  params: { page?: number; limit?: number } = {},
-) => {
-  const query = new URLSearchParams()
-  if (params.page) query.set("page", String(params.page))
-  if (params.limit) query.set("limit", String(params.limit))
-  const qs = query.toString()
-  const envelope = await apiClientFull<TReview[]>(
-    `/api/reviews/package/${packageId}${qs ? `?${qs}` : ""}`,
-  )
-  return { data: envelope.data, meta: envelope.meta }
-}
 
 // ── Internal (authenticated) management API ────────────────────────────────
 // These run client-side through the same-origin /api rewrite so the browser's
@@ -191,7 +169,6 @@ export const packagesApi = {
   getList,
   getBySlug,
   getCategories,
-  getReviews,
   getMyPackages,
   getAllPackages,
   createPackage,

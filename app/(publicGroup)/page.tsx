@@ -1,4 +1,5 @@
 import { packagesApi } from "@/lib/api/packages"
+import { reviewsApi } from "@/lib/api/reviews"
 import { blogApi } from "@/lib/api/blog"
 import { HeroSection } from "@/components/sections/hero"
 import { CategoryGrid } from "@/components/sections/category-grid"
@@ -77,7 +78,7 @@ async function getTestimonials(
 ): Promise<Testimonial[]> {
   const sample = featured.slice(0, 4)
   const results = await Promise.allSettled(
-    sample.map((pkg) => packagesApi.getReviews(pkg.id, { limit: 8 })),
+    sample.map((pkg) => reviewsApi.getReviews(pkg.id, { limit: 8 })),
   )
 
   const testimonials: Testimonial[] = []

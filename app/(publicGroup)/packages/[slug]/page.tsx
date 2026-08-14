@@ -100,6 +100,13 @@ export default async function PackageDetailPage({ params }: PageProps) {
               </div>
             )}
 
+            <Link
+              href={`/packages/${slug}/reviews`}
+              className="inline-flex cursor-pointer items-center gap-1 text-sm font-semibold tracking-widest text-primary uppercase transition-colors duration-200 hover:text-primary/80"
+            >
+              View all reviews <ArrowRight size={13} />
+            </Link>
+
             {pkg.agent && (
               <p className="text-sm text-muted-foreground">
                 Curated by{" "}
