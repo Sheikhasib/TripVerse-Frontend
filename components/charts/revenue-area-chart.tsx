@@ -21,7 +21,13 @@ const tooltipStyle = {
   fontSize: 12,
 }
 
-export function RevenueAreaChart({ data }: { data: TRevenuePoint[] }) {
+export function RevenueAreaChart({
+  data,
+  label = "Revenue",
+}: {
+  data: TRevenuePoint[]
+  label?: string
+}) {
   const tokens = useChartTokens()
   const color = tokens["--color-primary"] || "currentColor"
 
@@ -53,7 +59,7 @@ export function RevenueAreaChart({ data }: { data: TRevenuePoint[] }) {
           width={90}
         />
         <Tooltip
-          formatter={(value) => [formatBDT(Number(value)), "Revenue"]}
+          formatter={(value) => [formatBDT(Number(value)), label]}
           labelFormatter={(label) => String(label)}
           contentStyle={tooltipStyle}
         />

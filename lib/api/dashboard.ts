@@ -41,6 +41,8 @@ export type TUserOverview = {
   totalSpend: number
   upcomingCount: number
   upcoming: TUpcomingBooking[]
+  bookingsByStatus: TBookingsByStatus[]
+  revenueOverTime: TRevenuePoint[]
 }
 
 export type TDashboardOverview = TAdminOverview | TAgentOverview | TUserOverview
@@ -68,6 +70,8 @@ const toView = (raw: TDashboardOverview, role: TDashboardRole): TDashboardView =
       totalSpend: r.totalSpend,
       upcomingCount: r.upcomingCount,
       upcoming: r.upcoming,
+      bookingsByStatus: r.bookingsByStatus,
+      revenueOverTime: r.revenueOverTime,
     }
   }
 

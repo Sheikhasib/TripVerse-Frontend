@@ -1,37 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { cn } from "@/lib/utils"
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
 import { QuickActions } from "@/components/dashboard/quick-actions"
-import { BookingTable } from "@/components/dashboard/booking-table"
-import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
-
-const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
-  { value: "ALL", label: "All" },
-  { value: "PENDING", label: "Pending" },
-  { value: "PAID", label: "Paid" },
-  { value: "CONFIRMED", label: "Confirmed" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "CANCELLED", label: "Cancelled" },
-]
+import { ChartCard } from "@/components/charts/chart-card"
+import { RevenueAreaChart } from "@/components/charts/revenue-area-chart"
+import { StatusDonutChart } from "@/components/charts/status-donut-chart"
 
 export default function UserDashboardPage() {
-  const [status, setStatus] = useState<TBookingStatus | "ALL">("ALL")
-
   const { data: overview, isLoading: isOverviewLoading } =
     useDashboardOverview("user")
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["my-bookings", status],
-    queryFn: () =>
-      bookingsApi.getMyBookings(
-        status === "ALL" ? { limit: 50 } : { status, limit: 50 },
-      ),
-    staleTime: 30 * 1000,
-  })
+  const chartsLoading = isOverviewLoading
+  const revenueOverTime = overview?.revenueOverTime ?? []
+  const bookingsByStatus = overview?.bookingsByStatus ?? []
 
   return (
     <div className="space-y-6">
@@ -52,33 +34,24 @@ export default function UserDashboardPage() {
         role="user"
       />
 
-      <div>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-medium">My Bookings</h2>
-          <div className="flex flex-wrap gap-2">
-            {FILTERS.map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setStatus(filter.value)}
-                className={cn(
-                  "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-                  status === filter.value
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
-                )}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <BookingTable
-          bookings={data?.data ?? []}
-          isLoading={isLoading}
-          viewer="user"
-          invalidateKeys={[["my-bookings"]]}
-        />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard
+          title="My Spending"
+          description="Paid bookings, last 30 days"
+          loading={chartsLoading}
+          empty={revenueOverTime.length === 0}
+        >
+          <RevenueAreaChart data={revenueOverTime} label="Spending" />
+        </ChartCard>
+
+        <ChartCard
+          title="Bookings by Status"
+          description="Breakdown of your bookings"
+          loading={chartsLoading}
+          empty={bookingsByStatus.length === 0}
+        >
+          <StatusDonutChart data={bookingsByStatus} />
+        </ChartCard>
       </div>
     </div>
   )

@@ -87,7 +87,7 @@ const GoogleButton = () => {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div ref={buttonRef} className="min-h-10 w-full" />
+      <div ref={buttonRef} className="flex min-h-10 w-full justify-center" />
       {pending ? <Spinner className="size-4 animate-spin text-muted-foreground" /> : null}
     </div>
   )
