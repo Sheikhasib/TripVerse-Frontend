@@ -1,0 +1,1 @@
+export { Link as ProgressLink } from "react-transition-progress/next"
