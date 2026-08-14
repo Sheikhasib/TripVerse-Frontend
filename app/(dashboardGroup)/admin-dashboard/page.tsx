@@ -2,26 +2,17 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
+import { QuickActions } from "@/components/dashboard/quick-actions"
 import { BookingTable } from "@/components/dashboard/booking-table"
-import { Package } from "@phosphor-icons/react"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts"
+import { ChartCard } from "@/components/charts/chart-card"
+import { RevenueAreaChart } from "@/components/charts/revenue-area-chart"
+import { StatusDonutChart } from "@/components/charts/status-donut-chart"
+import { CategoryBarChart } from "@/components/charts/category-bar-chart"
+import { UsersByRoleChart } from "@/components/charts/users-by-role-chart"
 import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
-import { packagesApi } from "@/lib/api/packages"
-import { Skeleton } from "@/components/ui/skeleton"
-import { EmptyState } from "@/components/shared/empty-state"
-import { formatBDT } from "@/lib/format"
 
 const BOOKING_FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -32,22 +23,11 @@ const BOOKING_FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
   { value: "CANCELLED", label: "Cancelled" },
 ]
 
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-    new Date(date),
-  )
-
 export default function AdminDashboardPage() {
   const [status, setStatus] = useState<TBookingStatus | "ALL">("ALL")
 
   const { data: overview, isLoading: isOverviewLoading } =
     useDashboardOverview("admin")
-
-  const { data: packages, isLoading: packagesLoading } = useQuery({
-    queryKey: ["admin-packages"],
-    queryFn: () => packagesApi.getAllPackages({ limit: 50 }),
-    staleTime: 30 * 1000,
-  })
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
     queryKey: ["admin-bookings", status],
@@ -59,7 +39,11 @@ export default function AdminDashboardPage() {
     staleTime: 30 * 1000,
   })
 
+  const chartsLoading = isOverviewLoading
   const revenueOverTime = overview?.revenueOverTime ?? []
+  const bookingsByStatus = overview?.bookingsByStatus ?? []
+  const packagesByCategory = overview?.packagesByCategory ?? []
+  const usersByRole = overview?.usersByRole ?? []
 
   return (
     <div className="space-y-6">
@@ -70,76 +54,55 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
-      <OverviewCards overview={overview} isLoading={isOverviewLoading} role="admin" />
+      <QuickActions />
 
-      <div className="rounded-lg bg-card p-4 ring-1 ring-foreground/5">
-        <h2 className="mb-4 font-medium">Revenue Over Time</h2>
-        {revenueOverTime.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueOverTime} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-              <XAxis dataKey="date" tickFormatter={formatDate} />
-              <YAxis tickFormatter={(value) => formatBDT(Number(value))} width={90} />
-              <Tooltip
-                formatter={(value) => formatBDT(Number(value))}
-                labelFormatter={(label) => formatDate(String(label))}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="revenue" stroke="#8884d8" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No revenue data available yet.
-          </p>
-        )}
-      </div>
+      <OverviewCards
+        overview={overview}
+        isLoading={isOverviewLoading}
+        role="admin"
+      />
 
-      <div>
-        <h2 className="mb-3 font-medium">Packages Overview</h2>
-        {packagesLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-40 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : packages?.data.length === 0 ? (
-          <EmptyState
-            icon={<Package size={40} />}
-            title="No packages yet"
-            description="No packages found."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {packages?.data?.map((pkg) => (
-              <div
-                key={pkg.id}
-                className="rounded-lg bg-card p-4 ring-1 ring-foreground/5 transition-shadow hover:shadow-md"
-              >
-                <div className="relative mb-3 h-24 w-32">
-                  {pkg.images?.[0] && (
-                    <Image
-                      src={pkg.images[0]}
-                      alt={pkg.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 128px"
-                      className="rounded object-cover"
-                    />
-                  )}
-                </div>
-                <h3 className="truncate font-medium">{pkg.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {pkg.category?.name}
-                </p>
-                <p className="text-lg font-bold">{formatBDT(Number(pkg.price))}</p>
-              </div>
-            ))}
-          </div>
-        )}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ChartCard
+          title="Revenue Over Time"
+          description="Paid revenue, last 30 days"
+          loading={chartsLoading}
+          empty={revenueOverTime.length === 0}
+        >
+          <RevenueAreaChart data={revenueOverTime} />
+        </ChartCard>
+
+        <ChartCard
+          title="Bookings by Status"
+          description="Bookings per status"
+          loading={chartsLoading}
+          empty={bookingsByStatus.length === 0}
+        >
+          <StatusDonutChart data={bookingsByStatus} />
+        </ChartCard>
+
+        <ChartCard
+          title="Packages by Category"
+          description="Listings per category"
+          loading={chartsLoading}
+          empty={packagesByCategory.length === 0}
+        >
+          <CategoryBarChart data={packagesByCategory} />
+        </ChartCard>
+
+        <ChartCard
+          title="Users by Role"
+          description="Registered users per role"
+          loading={chartsLoading}
+          empty={usersByRole.length === 0}
+        >
+          <UsersByRoleChart data={usersByRole} />
+        </ChartCard>
       </div>
 
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-medium">Bookings Overview</h2>
+          <h2 className="font-medium">Bookings</h2>
           <div className="flex flex-wrap gap-2">
             {BOOKING_FILTERS.map((filter) => (
               <button

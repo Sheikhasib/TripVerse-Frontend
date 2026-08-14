@@ -5,8 +5,9 @@ import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
-import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
+import { QuickActions } from "@/components/dashboard/quick-actions"
 import { BookingTable } from "@/components/dashboard/booking-table"
+import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
 
 const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -43,32 +44,42 @@ export default function UserDashboardPage() {
         </p>
       </div>
 
-      <OverviewCards overview={overview} isLoading={isOverviewLoading} role="user" />
+      <QuickActions />
 
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            type="button"
-            onClick={() => setStatus(filter.value)}
-            className={cn(
-              "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-              status === filter.value
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
-            )}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
-
-      <BookingTable
-        bookings={data?.data ?? []}
-        isLoading={isLoading}
-        viewer="user"
-        invalidateKeys={[["my-bookings"]]}
+      <OverviewCards
+        overview={overview}
+        isLoading={isOverviewLoading}
+        role="user"
       />
+
+      <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-medium">My Bookings</h2>
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setStatus(filter.value)}
+                className={cn(
+                  "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  status === filter.value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                )}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <BookingTable
+          bookings={data?.data ?? []}
+          isLoading={isLoading}
+          viewer="user"
+          invalidateKeys={[["my-bookings"]]}
+        />
+      </div>
     </div>
   )
 }
