@@ -1,7 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { CheckCircle, CalendarBlank, MapPin } from "@phosphor-icons/react"
+import {
+  ArrowClockwise,
+  CalendarBlank,
+  CheckCircle,
+  MapPin,
+} from "@phosphor-icons/react"
+import { cn } from "@/lib/utils"
 import { formatBDT, formatDate } from "@/lib/format"
 import { PaymentStatusBadge } from "./payment-status-badge"
 import type { TBooking, TPayment } from "@/lib/api/bookings"
@@ -21,15 +27,30 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 )
 
 export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
+  const isRefunded = payment.status === "REFUNDED"
+
   return (
     <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5">
-      <div className="border-b border-border bg-emerald-500/10 px-6 py-5">
+      <div
+        className={cn(
+          "border-b px-6 py-5",
+          isRefunded ? "border-border bg-blue-500/10" : "border-border bg-emerald-500/10",
+        )}
+      >
         <div className="flex items-center gap-3">
-          <CheckCircle size={22} className="text-emerald-600" />
+          {isRefunded ? (
+            <ArrowClockwise size={22} className="text-blue-600" />
+          ) : (
+            <CheckCircle size={22} className="text-emerald-600" />
+          )}
           <div>
-            <h2 className="text-lg font-semibold">Payment received</h2>
+            <h2 className="text-lg font-semibold">
+              {isRefunded ? "Refund issued" : "Payment received"}
+            </h2>
             <p className="text-sm text-muted-foreground">
-              The agent will confirm your booking shortly.
+              {isRefunded
+                ? "This payment has been returned to your original payment method."
+                : "The agent will confirm your booking shortly."}
             </p>
           </div>
         </div>
@@ -37,7 +58,9 @@ export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
 
       <div className="space-y-4 px-6 py-5">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">Amount paid</p>
+          <p className="text-sm text-muted-foreground">
+            {isRefunded ? "Amount refunded" : "Amount paid"}
+          </p>
           <p className="text-2xl font-bold tabular-nums">
             {formatBDT(Number(payment.amount))}
           </p>
@@ -57,6 +80,15 @@ export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
         )}
         {payment.paidAt && (
           <DetailRow label="Paid at" value={formatDate(payment.paidAt)} />
+        )}
+        {isRefunded && payment.refundedAt && (
+          <DetailRow
+            label="Refunded at"
+            value={formatDate(payment.refundedAt)}
+          />
+        )}
+        {isRefunded && payment.refundRefId && (
+          <DetailRow label="Refund reference" value={payment.refundRefId} />
         )}
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">Payment status</p>

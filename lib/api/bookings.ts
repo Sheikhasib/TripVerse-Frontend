@@ -18,6 +18,8 @@ export type TPayment = {
   bankTranId?: string | null
   valId?: string | null
   paidAt?: string | null
+  refundRefId?: string | null
+  refundedAt?: string | null
 }
 
 export type TBookingStatus =

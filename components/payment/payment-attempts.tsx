@@ -74,10 +74,16 @@ export function PaymentAttempts({
                 {payment.tranId}
               </p>
             )}
-            {payment.paidAt && (
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(payment.paidAt)}
+            {payment.status === "REFUNDED" && payment.refundedAt ? (
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Refunded {formatDateTime(payment.refundedAt)}
               </p>
+            ) : (
+              payment.paidAt && (
+                <p className="text-xs text-muted-foreground">
+                  {formatDateTime(payment.paidAt)}
+                </p>
+              )
             )}
           </div>
         </motion.li>

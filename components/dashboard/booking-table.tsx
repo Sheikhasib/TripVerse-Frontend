@@ -102,11 +102,15 @@ export function BookingTable({
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: TBookingStatus }) =>
       bookingsApi.updateBookingStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       invalidateKeys.forEach((key) =>
         queryClient.invalidateQueries({ queryKey: key }),
       )
-      toast.success("Booking status updated.")
+      toast.success(
+        variables.status === "CANCELLED"
+          ? "Booking cancelled. Any payment will be refunded."
+          : "Booking status updated.",
+      )
     },
     onError: (error) => {
       toast.error(

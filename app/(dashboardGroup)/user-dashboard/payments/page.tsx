@@ -133,11 +133,25 @@ export default function UserPaymentsPage() {
                     </Link>
                   </TableCell>
                   <TableCell className="tabular-nums">
-                    {formatBDT(Number(booking.totalPrice))}
+                    {latest?.status === "REFUNDED" ? (
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {formatBDT(Number(latest.amount))}
+                      </span>
+                    ) : (
+                      formatBDT(Number(booking.totalPrice))
+                    )}
                   </TableCell>
                   <TableCell>
                     {latest ? (
-                      <PaymentStatusBadge status={latest.status} />
+                      <div className="flex flex-col gap-0.5">
+                        <PaymentStatusBadge status={latest.status} />
+                        {latest.status === "REFUNDED" && latest.refundedAt && (
+                          <span className="text-xs text-muted-foreground">
+                            Refunded {formatDate(latest.refundedAt)}
+                            {latest.refundRefId ? ` · #${latest.refundRefId.slice(0, 8)}` : ""}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
                     )}
