@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { notFound } from "next/navigation"
 import { packagesApi } from "@/lib/api/packages"
 import { ReviewList } from "@/components/shared/review-list"
 import { ReviewForm } from "@/components/review/review-form"
 import { Rating } from "@/components/shared/rating"
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr"
+import { GoBack } from "@/components/shared/go-back"
 
 export const dynamic = "force-dynamic"
 
@@ -35,13 +34,11 @@ export default async function PackageReviewsPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <Link
+      <GoBack
         href={`/packages/${slug}`}
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        <ArrowLeft size={15} />
-        Back to {pkg.title}
-      </Link>
+        label={`Back to ${pkg.title}`}
+        className="mb-6"
+      />
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">

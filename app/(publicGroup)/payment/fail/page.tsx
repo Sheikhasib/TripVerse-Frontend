@@ -9,6 +9,7 @@ import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { GoBack } from "@/components/shared/go-back"
 
 const PageSkeleton = () => (
   <div className="w-full space-y-4">
@@ -89,9 +90,11 @@ function PaymentFailContent() {
         <Button asChild>
           <Link href={bookingLink}>Retry payment</Link>
         </Button>
-        <Button asChild variant="outline">
-          <Link href="/user-dashboard/bookings">Back to bookings</Link>
-        </Button>
+        <GoBack
+          href="/user-dashboard/bookings"
+          label="Back to bookings"
+          variant="outline"
+        />
       </div>
     </div>
   )

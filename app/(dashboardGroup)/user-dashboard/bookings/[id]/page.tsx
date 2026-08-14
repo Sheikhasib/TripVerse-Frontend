@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
-  ArrowLeft,
   CalendarBlank,
   MapPin,
   Receipt,
@@ -19,6 +18,7 @@ import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { GoBack } from "@/components/shared/go-back"
 import { BookingStatusBadge } from "@/components/dashboard/booking-status-badge"
 import { PayNowButton } from "@/components/payment/pay-now-button"
 import { PaymentAttempts } from "@/components/payment/payment-attempts"
@@ -95,13 +95,7 @@ export default function UserBookingDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/user-dashboard/bookings"
-        className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        <ArrowLeft size={15} />
-        Back to bookings
-      </Link>
+      <GoBack href="/user-dashboard/bookings" label="Back to bookings" />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

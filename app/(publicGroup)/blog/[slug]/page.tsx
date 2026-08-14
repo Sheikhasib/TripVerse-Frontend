@@ -1,10 +1,9 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { blogApi } from "@/lib/api/blog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr"
+import { GoBack } from "@/components/shared/go-back"
 
 export const dynamic = "force-dynamic"
 
@@ -54,13 +53,7 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <article className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <Link
-        href="/blog"
-        className="mb-8 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        <ArrowLeft size={15} />
-        Back to blog
-      </Link>
+      <GoBack href="/blog" label="Back to blog" className="mb-8" />
 
       <header className="space-y-4">
         <p className="text-xs font-semibold tracking-widest uppercase text-primary">

@@ -4,12 +4,13 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, CheckCircle } from "@phosphor-icons/react"
+import { CheckCircle } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PaymentReceipt } from "@/components/payment/payment-receipt"
+import { GoBack } from "@/components/shared/go-back"
 
 const PageSkeleton = () => (
   <div className="w-full space-y-4">
@@ -100,13 +101,7 @@ function PaymentSuccessContent() {
   if (booking.status === "PAID" && successPayment) {
     return (
       <div className="w-full space-y-6">
-        <Link
-          href="/user-dashboard/bookings"
-          className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-        >
-          <ArrowLeft size={15} />
-          Back to bookings
-        </Link>
+        <GoBack href="/user-dashboard/bookings" label="Back to bookings" />
         <PaymentReceipt payment={successPayment} booking={booking} />
       </div>
     )

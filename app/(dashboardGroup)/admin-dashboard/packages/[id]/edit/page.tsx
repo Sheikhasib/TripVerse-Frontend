@@ -1,13 +1,12 @@
 "use client"
 
-import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, Package } from "@phosphor-icons/react"
+import { Package } from "@phosphor-icons/react"
 import { packagesApi } from "@/lib/api/packages"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/shared/empty-state"
+import { GoBack } from "@/components/shared/go-back"
 import { PackageForm } from "@/components/dashboard/package-form"
 
 export default function AdminEditPackagePage() {
@@ -43,12 +42,10 @@ export default function AdminEditPackagePage() {
         title="Package not found"
         description="We couldn't find that package. It may have been deleted, or the link may be out of date."
         action={
-          <Button asChild>
-            <Link href="/admin-dashboard/packages">
-              <ArrowLeft />
-              Back to Manage Packages
-            </Link>
-          </Button>
+          <GoBack
+            href="/admin-dashboard/packages"
+            label="Back to Manage Packages"
+          />
         }
       />
     )

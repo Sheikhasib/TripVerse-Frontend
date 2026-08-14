@@ -6,7 +6,8 @@ import { PackageImageGallery } from "./_components/package-image-gallery"
 import { BookingPanel } from "./_components/booking-panel"
 import { PackageCard } from "@/components/shared/package-card"
 import { Rating } from "@/components/shared/rating"
-import { ArrowLeft, ArrowRight } from "@phosphor-icons/react/dist/ssr"
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr"
+import { GoBack } from "@/components/shared/go-back"
 import type { TPublicPackage } from "@/lib/api/packages"
 import { formatBDT } from "@/lib/format"
 
@@ -60,13 +61,11 @@ export default async function PackageDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <Link
+      <GoBack
         href="/packages"
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        <ArrowLeft size={15} />
-        Back to packages
-      </Link>
+        label="Back to packages"
+        className="mb-6"
+      />
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">
         <div className="space-y-8 lg:col-span-3">

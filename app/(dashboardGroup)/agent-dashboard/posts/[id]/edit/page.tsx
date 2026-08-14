@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { GoBack } from "@/components/shared/go-back"
 import { useMe } from "@/hooks/use-me"
 import { Package, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
@@ -92,9 +93,11 @@ export default function AgentPostEditPage() {
         title="Post not found"
         description="This post doesn't exist or you don't have access to it."
         action={
-          <Button variant="outline" onClick={() => router.replace("/agent-dashboard/my-posts")}>
-            Go back
-          </Button>
+          <GoBack
+            href="/agent-dashboard/my-posts"
+            label="Go back"
+            variant="outline"
+          />
         }
       />
     )
