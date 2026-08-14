@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -36,12 +36,7 @@ export default function AgentMyPostsPage() {
   })
 
   const totalPages = data?.meta?.totalPages ?? 1
-
-  useEffect(() => {
-    if (page > 1 && totalPages > 0 && page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const posts = data?.data ?? []
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["agent-blog-posts"] })
@@ -67,6 +62,9 @@ export default function AgentMyPostsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => blogApi.deletePost(id),
     onSuccess: () => {
+      if (posts.length === 1 && page > 1) {
+        setPage(page - 1)
+      }
       toast.success("Post deleted.")
       invalidate()
     },
@@ -86,8 +84,6 @@ export default function AgentMyPostsPage() {
       </div>
     )
   }
-
-  const posts = data?.data ?? []
 
   return (
     <div className="space-y-6">

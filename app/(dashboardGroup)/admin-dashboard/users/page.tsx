@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { usersApi, type TAdminUser, type TUserStatus } from "@/lib/api/users"
 import { ApiError } from "@/lib/api/client"
@@ -26,12 +26,7 @@ export default function AdminUsersPage() {
   })
 
   const totalPages = data?.meta?.totalPages ?? 1
-
-  useEffect(() => {
-    if (page > 1 && totalPages > 0 && page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const users = data?.data ?? []
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-users"] })
@@ -61,14 +56,15 @@ export default function AdminUsersPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => usersApi.deleteUser(id),
     onSuccess: () => {
+      if (users.length === 1 && page > 1) {
+        setPage(page - 1)
+      }
       toast.success("User deleted.")
       invalidate()
     },
     onError: (error) =>
       toast.error(error instanceof ApiError ? error.message : "Failed to delete user."),
   })
-
-  const users = data?.data ?? []
 
   if (isLoading) {
     return (
@@ -179,6 +175,10 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {users.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
     </div>
   )

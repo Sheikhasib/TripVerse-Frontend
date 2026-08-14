@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -62,12 +62,8 @@ export default function AdminPackagesPage() {
   })
 
   const totalPages = data?.meta?.totalPages ?? 1
-
-  useEffect(() => {
-    if (page > 1 && totalPages > 0 && page > totalPages) {
-      setPage(totalPages)
-    }
-  }, [page, totalPages])
+  const packages = data?.data ?? []
+  const safePage = Math.min(page, totalPages)
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-packages"] })
@@ -90,8 +86,6 @@ export default function AdminPackagesPage() {
       )
     },
   })
-
-  const packages = data?.data ?? []
 
   return (
     <div className="space-y-6">
@@ -231,7 +225,7 @@ export default function AdminPackagesPage() {
       )}
 
       {packages.length > 0 && (
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination page={safePage} totalPages={totalPages} onPageChange={setPage} />
       )}
     </div>
   )
