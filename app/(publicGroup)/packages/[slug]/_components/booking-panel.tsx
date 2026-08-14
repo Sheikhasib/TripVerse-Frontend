@@ -26,17 +26,11 @@ import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { useMe } from "@/hooks/use-me"
 import type { TPublicPackage } from "@/lib/api/packages"
+import { formatBDT } from "@/lib/format"
 
 interface BookingPanelProps {
   pkg: TPublicPackage
 }
-
-const formatPrice = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value)
 
 const todayInputValue = () => {
   const now = new Date()
@@ -79,7 +73,7 @@ export function BookingPanel({ pkg }: BookingPanelProps) {
     <div className="space-y-4 rounded-lg bg-card p-6 ring-1 ring-foreground/5 lg:sticky lg:top-24">
       <div className="flex items-baseline justify-between">
         <span className="text-3xl font-bold tabular-nums text-primary">
-          {formatPrice(pkg.price)}
+          {formatBDT(pkg.price)}
         </span>
         <span className="text-sm text-muted-foreground">/ person</span>
       </div>
@@ -165,7 +159,7 @@ export function BookingPanel({ pkg }: BookingPanelProps) {
             <div className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm">
               <span className="text-muted-foreground">Estimated total</span>
               <span className="font-semibold tabular-nums">
-                {formatPrice(estimate)}
+                {formatBDT(estimate)}
               </span>
             </div>
             <FormDescription className="-mt-2 text-xs">
