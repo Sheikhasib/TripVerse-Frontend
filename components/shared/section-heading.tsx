@@ -36,8 +36,8 @@ export function SectionHeading({
 
   return (
     <div
-      className={`mb-10 flex items-end justify-between gap-4 ${
-        align === "center" ? "flex-col items-center" : ""
+      className={`mb-10 flex gap-4 ${
+        align === "center" ? "flex-col items-center" : "items-end justify-between"
       }`}
     >
       {heading}
