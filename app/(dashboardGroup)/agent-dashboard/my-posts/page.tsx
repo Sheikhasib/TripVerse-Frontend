@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -12,27 +12,36 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { PaginationPages } from "@/components/shared/pagination"
 import { useMe } from "@/hooks/use-me"
 import { Package, Spinner, PencilLine, Trash } from "@phosphor-icons/react"
 import { toast } from "sonner"
 
 const EMPTY_FORM = { title: "", excerpt: "", content: "", coverImage: "" }
+const PAGE_SIZE = 9
 
 export default function AgentMyPostsPage() {
   const { user } = useMe()
   const queryClient = useQueryClient()
+  const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<"new" | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["agent-blog-posts", user?.id],
-    queryFn: async () => {
-      const result = await blogApi.getList({ limit: 50 })
-      return result.data.filter((post) => post.author.id === user?.id)
-    },
+    queryKey: ["agent-blog-posts", page],
+    queryFn: () => blogApi.getMyPosts({ page, limit: PAGE_SIZE }),
     enabled: Boolean(user),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
+
+  const totalPages = data?.meta?.totalPages ?? 1
+
+  useEffect(() => {
+    if (page > 1 && totalPages > 0 && page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["agent-blog-posts"] })
@@ -78,7 +87,7 @@ export default function AgentMyPostsPage() {
     )
   }
 
-  const posts = data ?? []
+  const posts = data?.data ?? []
 
   return (
     <div className="space-y-6">
@@ -183,9 +192,14 @@ export default function AgentMyPostsPage() {
                 {post.excerpt || "No excerpt"}
               </p>
               <div className="mt-2 flex items-center justify-between">
-                <small className="text-xs text-muted-foreground">
-                  {new Date(post.createdAt).toLocaleDateString()}
-                </small>
+                <div className="flex items-center gap-2">
+                  <small className="text-xs text-muted-foreground">
+                    {new Date(post.createdAt).toLocaleDateString()}
+                  </small>
+                  <span className="text-xs font-semibold uppercase text-primary">
+                    {post.status}
+                  </span>
+                </div>
                 <div className="flex gap-1">
                   <Button size="sm" variant="outline" asChild>
                     <Link href={`/agent-dashboard/posts/${post.id}/edit`}>
@@ -205,6 +219,14 @@ export default function AgentMyPostsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {posts.length > 0 && (
+        <PaginationPages
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { usersApi, type TAdminUser, type TUserStatus } from "@/lib/api/users"
 import { ApiError } from "@/lib/api/client"
@@ -7,17 +8,30 @@ import type { TRole } from "@/lib/validations/auth"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { Pagination } from "@/components/shared/pagination"
 import { Users, Trash } from "@phosphor-icons/react"
 import { toast } from "sonner"
 
+const PAGE_SIZE = 10
+
 export default function AdminUsersPage() {
   const queryClient = useQueryClient()
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => usersApi.getAllUsers({ limit: 50 }),
+    queryKey: ["admin-users", page],
+    queryFn: () => usersApi.getAllUsers({ page, limit: PAGE_SIZE }),
+    placeholderData: (previousData) => previousData,
     staleTime: 60 * 1000,
   })
+
+  const totalPages = data?.meta?.totalPages ?? 1
+
+  useEffect(() => {
+    if (page > 1 && totalPages > 0 && page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-users"] })

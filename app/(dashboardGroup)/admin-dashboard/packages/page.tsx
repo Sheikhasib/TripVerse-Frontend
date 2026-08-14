@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
+import { Pagination } from "@/components/shared/pagination"
 import {
   Table,
   TableBody,
@@ -28,6 +29,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+
+const PAGE_SIZE = 10
 
 const FILTERS: { value: TPackageStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -44,15 +47,27 @@ export default function AdminPackagesPage() {
   const [status, setStatus] = useState<TPackageStatus | "ALL">(
     (searchParams.get("status") as TPackageStatus | null) ?? "ALL",
   )
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-packages", status],
+    queryKey: ["admin-packages", status, page],
     queryFn: () =>
       packagesApi.getAllPackages(
-        status === "ALL" ? { limit: 50 } : { status, limit: 50 },
+        status === "ALL"
+          ? { page, limit: PAGE_SIZE }
+          : { status, page, limit: PAGE_SIZE },
       ),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
+
+  const totalPages = data?.meta?.totalPages ?? 1
+
+  useEffect(() => {
+    if (page > 1 && totalPages > 0 && page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["admin-packages"] })
@@ -95,7 +110,10 @@ export default function AdminPackagesPage() {
           <button
             key={filter.value}
             type="button"
-            onClick={() => setStatus(filter.value)}
+            onClick={() => {
+              setStatus(filter.value)
+              setPage(1)
+            }}
             className={cn(
               "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
               status === filter.value
@@ -210,6 +228,10 @@ export default function AdminPackagesPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {packages.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
     </div>
   )

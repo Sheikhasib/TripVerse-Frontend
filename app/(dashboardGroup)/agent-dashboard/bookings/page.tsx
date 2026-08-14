@@ -6,7 +6,10 @@ import { MagnifyingGlass } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
 import { BookingTable } from "@/components/dashboard/booking-table"
+import { Pagination } from "@/components/shared/pagination"
 import { Input } from "@/components/ui/input"
+
+const PAGE_SIZE = 10
 
 const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -20,17 +23,22 @@ const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
 export default function AgentBookingsPage() {
   const [status, setStatus] = useState<TBookingStatus | "ALL">("ALL")
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["agent-bookings", status, search],
+    queryKey: ["agent-bookings", status, search, page],
     queryFn: () =>
       bookingsApi.getAgentBookings({
         status: status === "ALL" ? undefined : status,
         search: search || undefined,
-        limit: 50,
+        page,
+        limit: PAGE_SIZE,
       }),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
+
+  const totalPages = data?.meta?.totalPages ?? 1
 
   return (
     <div className="space-y-6">
@@ -53,7 +61,10 @@ export default function AgentBookingsPage() {
           <Input
             placeholder="Search by package title…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
             className="pl-9"
           />
         </div>
@@ -62,7 +73,10 @@ export default function AgentBookingsPage() {
             <button
               key={filter.value}
               type="button"
-              onClick={() => setStatus(filter.value)}
+              onClick={() => {
+                setStatus(filter.value)
+                setPage(1)
+              }}
               className={cn(
                 "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
                 status === filter.value
@@ -82,6 +96,8 @@ export default function AgentBookingsPage() {
         viewer="agent"
         invalidateKeys={[["agent-bookings"]]}
       />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

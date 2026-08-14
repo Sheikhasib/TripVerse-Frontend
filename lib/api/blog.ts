@@ -75,6 +75,20 @@ const getAllPosts = async (
   return { data: envelope.data, meta: envelope.meta }
 }
 
+const getMyPosts = async (
+  params: { status?: TBlogPostStatus; page?: number; limit?: number } = {},
+) => {
+  const query = new URLSearchParams()
+  if (params.status) query.set("status", params.status)
+  if (params.page) query.set("page", String(params.page))
+  if (params.limit) query.set("limit", String(params.limit))
+  const qs = query.toString()
+  const envelope = await apiClientFull<TBlogInternalPost[]>(
+    `/api/blog/my-posts${qs ? `?${qs}` : ""}`,
+  )
+  return { data: envelope.data, meta: envelope.meta }
+}
+
 const createPost = (payload: TBlogMutationPayload) =>
   apiClient<TBlogInternalPost>("/api/blog", {
     method: "POST",
@@ -100,6 +114,7 @@ export const blogApi = {
   getList,
   getBySlug,
   getAllPosts,
+  getMyPosts,
   createPost,
   updatePost,
   updatePostStatus,
