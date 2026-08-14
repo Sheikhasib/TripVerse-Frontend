@@ -97,7 +97,7 @@ export default function UserPaymentsPage() {
           </TableHeader>
           <TableBody>
             {bookings.map((booking) => {
-              const latest = booking.payments?.[booking.payments.length - 1]
+              const latest = booking.payments?.[0]
               return (
                 <TableRow key={booking.id}>
                   <TableCell>

@@ -8,6 +8,7 @@ import { Plus, Spinner, Trash, PencilLine } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { packagesApi } from "@/lib/api/packages"
 import { ApiError } from "@/lib/api/client"
+import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
@@ -30,12 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import type { TInternalPackage } from "@/lib/api/packages"
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(price)
+const formatPrice = (price: number) => formatBDT(Number(price))
 
 const formatDate = (value?: string) =>
   value

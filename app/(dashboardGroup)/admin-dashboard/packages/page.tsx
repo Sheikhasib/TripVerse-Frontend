@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { packagesApi, type TPackageStatus } from "@/lib/api/packages"
 import { ApiError } from "@/lib/api/client"
+import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
@@ -35,12 +36,7 @@ const FILTERS: { value: TPackageStatus | "ALL"; label: string }[] = [
   { value: "REJECTED", label: "Rejected" },
 ]
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(price)
+const formatPrice = (price: number) => formatBDT(Number(price))
 
 export default function AdminPackagesPage() {
   const searchParams = useSearchParams()

@@ -6,7 +6,8 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
-import { Package, Clock } from "@phosphor-icons/react"
+import { BookingTable } from "@/components/dashboard/booking-table"
+import { Package } from "@phosphor-icons/react"
 import {
   LineChart,
   Line,
@@ -157,53 +158,12 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         </div>
-        {bookingsLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-36 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : bookings?.data.length === 0 ? (
-          <EmptyState
-            icon={<Clock size={40} />}
-            title="No bookings yet"
-            description="No bookings found with the current filter."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {bookings?.data?.map((booking) => (
-              <div
-                key={booking.id}
-                className="rounded-lg bg-card p-4 ring-1 ring-foreground/5 transition-shadow hover:shadow-md"
-              >
-                <div className="relative mb-3 h-20 w-32">
-                  {booking.package.images?.[0] && (
-                    <Image
-                      src={booking.package.images[0]}
-                      alt={booking.package.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 128px"
-                      className="rounded object-cover"
-                    />
-                  )}
-                </div>
-                <div>
-                  <p className="truncate font-medium">{booking.package.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {booking.travelers} travelers ·{" "}
-                    {new Intl.DateTimeFormat("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    }).format(new Date(booking.travelDate))}
-                  </p>
-                </div>
-                <p className="mt-1 text-lg font-bold">
-                  {formatBDT(Number(booking.totalPrice))}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        <BookingTable
+          bookings={bookings?.data ?? []}
+          isLoading={bookingsLoading}
+          viewer="admin"
+          invalidateKeys={[["admin-bookings"]]}
+        />
       </div>
     </div>
   )

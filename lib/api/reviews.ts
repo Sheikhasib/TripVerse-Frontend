@@ -15,8 +15,19 @@ export type TReviewQuery = {
   limit?: number
 }
 
+// POST /api/reviews returns the created review row plus the package's
+// recomputed average rating. The server's create response does not include the
+// review's user relation, so this is a lean subset of TReview.
+export type TReviewCreated = {
+  id: string
+  rating: number
+  comment?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type TCreateReviewResponse = {
-  review: TReview
+  review: TReviewCreated
   rating: number
 }
 

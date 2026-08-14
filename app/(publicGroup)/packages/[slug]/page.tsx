@@ -8,6 +8,7 @@ import { PackageCard } from "@/components/shared/package-card"
 import { Rating } from "@/components/shared/rating"
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react/dist/ssr"
 import type { TPublicPackage } from "@/lib/api/packages"
+import { formatBDT } from "@/lib/format"
 
 export const dynamic = "force-dynamic"
 
@@ -42,11 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Package not found" }
   }
 
-  const price = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(pkg.price)
+  const price = formatBDT(Number(pkg.price))
 
   return {
     title: pkg.title,

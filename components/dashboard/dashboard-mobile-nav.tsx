@@ -21,6 +21,7 @@ const NAV_BY_ROLE: Record<TRole, NavItem[]> = {
   USER: [
     { label: "Overview", href: "/user-dashboard" },
     { label: "My Bookings", href: "/user-dashboard/bookings" },
+    { label: "Payments", href: "/user-dashboard/payments" },
     { label: "Profile", href: "/user-dashboard/profile" },
     { label: "Settings", href: "/user-dashboard/settings" },
   ],

@@ -5,19 +5,13 @@ import Link from "next/link"
 import Image from "next/image"
 import { Clock, MapPin, Star, Compass } from "@phosphor-icons/react"
 import type { TPublicPackage } from "@/lib/api/packages"
+import { formatBDT } from "@/lib/format"
 
 interface PackageCardProps {
   pkg: TPublicPackage
   rating?: number
   reviewCount?: number
 }
-
-const formatPrice = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value)
 
 export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
   const [imgError, setImgError] = useState(false)
@@ -88,7 +82,7 @@ export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
 
         <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/60">
           <span className="font-semibold tabular-nums text-primary">
-            {formatPrice(pkg.price)}
+            {formatBDT(Number(pkg.price))}
           </span>
           <Link
             href={`/packages/${pkg.slug}`}

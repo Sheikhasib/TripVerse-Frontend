@@ -244,7 +244,7 @@ export function PackageForm({
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Price (USD)</FormLabel>
+                  <FormLabel>Price (BDT)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

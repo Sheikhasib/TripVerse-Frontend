@@ -7,17 +7,11 @@ import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, CaretDown, MapPin, Users } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import type { TPublicPackage } from "@/lib/api/packages"
+import { formatBDT } from "@/lib/format"
 
 interface HeroSectionProps {
   items: TPublicPackage[]
 }
-
-const priceLabel = (price: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price)
 
 export function HeroSection({ items }: HeroSectionProps) {
   const router = useRouter()
@@ -173,7 +167,7 @@ export function HeroSection({ items }: HeroSectionProps) {
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{current.title}</p>
               <p className="text-xs text-muted-foreground">
-                {current.location} · from {priceLabel(current.price)}
+                {current.location} · from {formatBDT(Number(current.price))}
               </p>
             </div>
           </div>
