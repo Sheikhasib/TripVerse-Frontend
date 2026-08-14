@@ -16,6 +16,6 @@ Files are numbered in the order you build them — each depends on the one befor
 10. `10-dashboards.md` — user/agent/admin dashboard routes, sidebars, charts, tables
 11. `11-deployment.md` — Vercel, env vars, image domains, CORS
 12. `12-explicitly-cut.md` — everything deferred, for later
-13. `13-payment-gateway.md` — SSLCommerz payment gateway (initiate, verify, success/cancel/fail pages, receipt, user payments history) — builds on 8 and 10; server side shipped as backend Step 16
+13. `13-payment-gateway.md` — SSLCommerz payment gateway (`POST /api/payments/create` → gateway, server `confirm`/`ipn` settle, `/payment/{success|cancel|fail}` return pages, receipt, user payments history) — builds on 8 and 10; server side shipped as backend Step 16
 
 Finish and test one file before opening the next.

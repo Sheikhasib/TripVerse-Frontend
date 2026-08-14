@@ -1,236 +1,261 @@
 # Step 13 — Payment Gateway (SSLCommerz)
 
+## Status
+
+**PARTIAL.** `lib/api/payments.ts` (the `/create` client) is written but the pages are not —
+`app/(publicGroup)/payment/page.tsx` is a broken placeholder (it has three `default` exports and
+reads a localStorage "active payment" marker) and must be replaced. Remaining work: the
+pay-now button, payment components, the three gateway-return pages, the user payments history
+page, and the `proxy.ts` public-path entry.
+
 ## Overview
 
-Promotes payment out of "Explicitly Cut" (Step 12) into a real step, mirroring the server's Step 16
-(payment module, `tripverse-server/.opencode/specs/16-payment-module.md`). Checkout uses **SSLCommerz**
-in **BDT**. A `USER` books a package (Step 8), gets a `PENDING` booking with a server-computed
-`totalPrice`, then hits **Pay now** on the booking detail page: the client calls `POST /api/payments/initiate`,
-stores a small "active payment session" marker, and redirects the browser to the SSLCommerz gateway
-(`gatewayPageUrl`). SSLCommerz bounces the user back to `/payment/{success|cancel|fail}`. The success
-page calls `POST /api/payments/:id/verify`; on server-validated success the payment → `SUCCESS` and the
-booking → `PAID`, and the page renders the receipt (from the `payment + booking` returned by verify).
-Receipts and payment attempts are also visible on `/user-dashboard/bookings/[id]`, and a new
-`/user-dashboard/payments` page lists them (promoted out of `[LATER]`). The seller flow is unchanged
-(`PAID → CONFIRMED → COMPLETED`, Step 8/10); cancelling a `PAID` booking marks the payment `REFUNDED`
-in the DB only.
+A `USER` books a package (Step 8) and gets a `PENDING` booking with a server-computed
+`totalPrice`. On the booking detail page they hit **Pay now**: the client calls
+`POST /api/payments/create { bookingId }`, receives `{ paymentId, tranId, paymentUrl }`, and
+redirects the browser to `paymentUrl` (the SSLCommerz-hosted checkout). SSLCommerz then POSTs the
+outcome **server-to-server** to the backend's `POST /api/payments/confirm?bookingId&tranId&status`
+(or `/ipn`); the backend settles the payment ledger and — on success — flips the booking
+`PENDING → PAID`, then 302-redirects the browser to
+`{frontend}/payment/{success|cancel|fail}?bookingId=<id>`. The result pages read `bookingId` from
+the query string, fetch the booking (`GET /api/bookings/:id` includes `payments`), and render the
+receipt or a status card.
+
+**Key divergence from the earlier draft spec:** there is **no client-side `verify` call** and
+**no localStorage session** — identification travels in the redirect query, and the settlement
+already happened server-side before the browser lands on the result page. Receipts and attempts
+are also visible on `/user-dashboard/bookings/[id]`; `/user-dashboard/payments` (promoted out of
+`[LATER]`) lists the user's bookings with their latest payment status. The seller flow is
+unchanged (`PAID → CONFIRMED → COMPLETED`, Step 8/10); cancelling a `PAID` booking marks its
+`SUCCESS` payments `REFUNDED` in the DB only.
 
 ## Depends on
 
-- `lib/api/client.ts` — `apiClient<T>` / `apiClientFull<T>`, `TApiEnvelope<T>`, `ApiError`. Payment calls
-  go through here and throw `ApiError(statusCode, message)` — the message is surfaced verbatim.
-- `lib/api/bookings.ts` (Step 8) — `fetchMyBookings`, `fetchBookingById`, `createBooking`; its booking
-  type must gain `payments: TPayment[]` and the status union must gain `"PAID"`.
-- `hooks/useBookings.ts` (Step 8) — query keys to invalidate after initiate/verify so the booking UI
-  (PAID badge, attempts) refreshes.
-- `app/(dashboardGroup)/user-dashboard/bookings/[id]/page.tsx` (Step 10) — booking detail page that gets
-  the Pay-now button, the attempt list, and the receipt section. Proxy-guarded to `USER` (Step 4).
-- `app/(publicGroup)/` — the three gateway-return pages live here (public layout, no proxy guard), because
-  `proxy.ts` (Step 4) lists these as public routes; auth for the verify call comes from the token cookies
-  still present in the returning browser.
-- `components/ui/` — `button`, `card`, `badge`, `skeleton`, `dialog`, `sonner` only; no new primitives.
-- Server: `POST /api/payments/initiate` / `POST /api/payments/:id/verify` (Step 16) plus
-  `GET /api/bookings/:id` and `GET /api/bookings/my-bookings` now including `payments` and `?status=PAID`.
-- `next.config.ts` — the `/api/:path*` rewrite already proxies payment calls; no change, no new client env.
+- `lib/api/client.ts` — `apiClient<T>`, `ApiError(statusCode, message)` (surfaced verbatim).
+- `lib/api/bookings.ts` (Step 8) — `getBookingById` (booking detail includes `payments`),
+  `getMyBookings` (payments on list rows); `TPayment`/`TPaymentStatus` already co-located here.
+- `lib/api/payments.ts` — `paymentsApi.createPayment` (already written; see below).
+- `hooks/use-me.ts` — none needed for the payment pages themselves (booking fetch is
+  cookie-authenticated via the same-origin rewrite).
+- `app/(dashboardGroup)/user-dashboard/bookings/[id]/page.tsx` (Step 8) — gains Pay-now,
+  payment attempts, and the receipt section. `proxy.ts` guards `/user-dashboard` to `USER`.
+- `app/(publicGroup)/` — the three gateway-return pages live here.
+- `proxy.ts` (Step 4) — **must add `/payment` to `PUBLIC_PREFIXES`**; it is currently absent, so
+  an unauthenticated browser bouncing back from the gateway would be redirected to `/login`.
+- `components/ui/` — `button`, `card`, `badge`, `skeleton`, `sonner` only.
+- Server: `payment` module (Step 16) — `POST /api/payments/create`, `POST /api/payments/confirm`,
+  `POST /api/payments/ipn`; plus `GET /api/bookings/:id` and `/my-bookings` already including
+  `payments`.
+- `next.config.ts` — the `/api/:path*` rewrite already proxies payment calls; no change, no new
+  client env (all `SSLCOMMERZ_*` stays server-side).
 
 ## Routes
 
 ```
-[public] /payment/success          post-gateway return — verifies the active session, renders the receipt
-[public] /payment/cancel           user clicked Cancel on the gateway — clears session, booking stays PENDING
-[public] /payment/fail             gateway failure — clears session, retry state
-[public] /payment                  thin status page — shows an in-flight payment with a resume link, else empty state
-[USER]   /user-dashboard/bookings/[id]   modify — Pay now + payment attempts + receipt section
-[USER]   /user-dashboard/bookings       modify — rows gain a PAID badge and, on PENDING/abandoned, "Pay"
+[public] /payment/success?bookingId=   post-gateway return — shows the receipt when the booking is PAID with a SUCCESS payment
+[public] /payment/cancel?bookingId=    user cancelled at the gateway — booking stays PENDING, retry link
+[public] /payment/fail?bookingId=      gateway failure — booking stays PENDING, retry link
+[USER]   /user-dashboard/bookings/[id]   modify — Pay-now + payment attempts + receipt section
+[USER]   /user-dashboard/bookings       modify — rows already show the PAID badge; add a "Pay" affordance on PENDING rows (optional)
 [USER]   /user-dashboard/payments        promoted from [LATER] — payment history derived from my-bookings
 ```
 
-Note: `/payment/*` pages are rendered by `(publicGroup)` without a dashboard shell; the `verify` post
-needs auth, so the success page handles a 401 gracefully ("session expired — log in", linking to
-`/login?redirectTo=/payment/success`) instead of assuming the cookies survived.
+Note: `/payment/*` renders in `(publicGroup)` without the dashboard shell. The booking fetch needs
+the user's cookies; if they expired during checkout the page shows a "sign in to continue" prompt
+linking to `/login?redirectTo=<current>` — the browser still has the `bookingId`, so re-login then
+returning re-renders the receipt.
 
-## Identification problem & the active-payment session
+## Server contract (actual, Step 16)
 
-`s/ssl`'s return URLs are static per the server (`<frontend>/payment/success` etc.) — they carry no
-per-payment id, and there is no client-visible `GET /payment/:id`. So the client must remember which
-payment it started before redirecting away.
+```
+POST /api/payments/create            auth(USER)  body { bookingId }
+  → 201 { paymentId, tranId, paymentUrl }
+  Errors (verbatim): 404 "Booking not found." · 403 "You are not authorized to pay for this
+  booking." · 409 "This booking is already paid." · 409 "Cannot pay for a booking in <status>
+  status." · 502 SSLCommerz init failures.
+  Side effects: any prior INITIATED payment for the booking is flipped to CANCELLED and a new
+  INITIATED ledger row is created before the gateway is asked; if init throws, the fresh row is
+  flipped to FAILED (the ledger always tells the truth). paymentUrl is the gateway page URL.
 
-- `lib/payment-session.ts` — localStorage key `tv-active-payment`, value
-  `{ paymentId, bookingId, tranId, initiatedAt }`.
-- Written on `initiate` success (right before redirect), cleared on every terminal state
-  (`success` → after successful verify; `cancel`/`fail` → on mount). Never cleared on a failed verify —
-  the receipt flow still owes the user a resolution.
-- Guarded: client-only ("use client"), try/catch around `JSON.parse`, tolerate a missing
-  localStorage (privacy mode) by falling back to "no active session".
+POST /api/payments/confirm?bookingId=&tranId=&status=success|fail|cancel   public callback
+  Settles (idempotent) then 302-redirects to {frontend}/payment/{status}?bookingId=
+POST /api/payments/ipn?bookingId=&tranId=                                 public callback
+  Same idempotent settle; answers 200 OK (no redirect).
+
+Settle rules (processGatewayResult):
+  - unknown session          → no-op (responds FAILED/no-change, nothing persisted)
+  - already SUCCESS          → idempotent 200, no double-charge
+  - cancel callback          → payment CANCELLED
+  - no val_id (fail_url)     → payment FAILED
+  - val_id present           → server-side validate; VALID/VALIDATED + amount matches the frozen
+                               booking.totalPrice → payment SUCCESS (stores valId, cardType,
+                               bankTranId, paidAt) + booking PENDING → PAID (compare-and-set: a
+                               concurrently-confirmed/cancelled booking stays put) + "payment
+                               received" email; anything else → payment FAILED.
+```
 
 ## New API functions
 
 ```
-lib/api/payments.ts
-  paymentsApi.initiate(bookingId) — POST /api/payments/initiate — body { bookingId }
-      → TInitiateResult { gatewayPageUrl, tranId }
-      Errors surface verbatim: 400 "not payable" (CANCELLED booking), 409 "already paid" /
-      "a payment session is already active", 502 (gateway init failed).
-  paymentsApi.verify(paymentId) — POST /api/payments/:id/verify
-      → TVerifyResult { payment, booking }   // receipt data — payment + booking in one shot
-      Idempotent 200 on double-submit/IPN-race; 403/404 if not owned; 400 "payment could not be verified".
-```
-
-Type locations follow the project convention (types co-located with the API file, e.g. `TAuthUser` in
-`auth.ts`):
-
-```
-lib/api/payments.ts
+lib/api/payments.ts   (already written — keep as-is except type tidy-up)
   TPaymentStatus = "INITIATED" | "SUCCESS" | "FAILED" | "CANCELLED" | "REFUNDED"
-  TPayment — mirrors the server Payment model: id, bookingId, tranId, valId?, amount (number), currency,
-             status, gatewayPageUrl?, sslSessionKey?, cardType?, bankTranId?, paidAt?, createdAt
-  TInitiateResult = { gatewayPageUrl: string; tranId: string }
-  TVerifyResult = { payment: TPayment; booking: TBooking }
+  TPayment        — mirrors the server payment row returned in bookings (id, tranId, amount,
+                    currency, status, cardType?, bankTranId?, paidAt?) — re-import from
+                    ./bookings instead of redeclaring (today it is duplicated; single-source it).
+  TPaymentCreateResult = { paymentId: string; tranId: string; paymentUrl: string }
+  paymentsApi.createPayment({ bookingId }) — POST /api/payments/create → TPaymentCreateResult
 ```
 
-`lib/api/bookings.ts` (modify, Step 8): extend `TBookingStatus` with `"PAID"` and add
-`payments?: TPayment[]` to the booking detail type (import `TPayment` from `./payments`).
-
-## Session helper
-
-```
-lib/payment-session.ts
-  setActivePayment(session: TActivePayment) / getActivePayment(): TActivePayment | null
-  clearActivePayment() — localStorage-synced, safe on server / when JSON is corrupt
-```
+Type locations follow the project convention (co-located with the owning API file). Note the
+server's booking payment select does **not** return `valId` today, but the draft receipt page
+reads `payment.valId`. Decide: add `valId` to the server's `bookingPaymentSelect` (small backend
+change, gives the receipt the SSLCommerz authorization code) or drop the Authorization ID line.
+Also drop the redundant `TPaymentStatusBadge` alias (dup of `TPaymentStatus`).
 
 ## New Hooks
 
+No `useQuery` hooks — there is no payment-list endpoint; history and receipts come from the
+bookings data (`["booking", id]`, `["my-bookings"]`).
+
 ```
 hooks/usePayments.ts
-  usePaymentsApi-level hooks only — no cached GETs exist for payments.
-  useInitiatePayment()   — useMutation(paymentsApi.initiate)
-      onSuccess: setActivePayment(...) then window.location.assign(gatewayPageUrl)
-      onSuccess invalidates: ['bookings', 'my-bookings'] and booking-detail key ['booking', id]
-  useVerifyPayment()     — useMutation(paymentsApi.verify)
-      onSuccess: clearActivePayment(); invalidates my-bookings + booking detail
+  useCreatePayment()  — useMutation(paymentsApi.createPayment)
+      onSuccess(data): window.location.assign(data.paymentUrl)   // hard redirect to the gateway
+      onError:          surfaces 400/403/409/502 ApiError.message verbatim (sonner toast)
+      (No queryClient invalidation needed pre-redirect.)
 ```
-
-No `useQuery` hooks — there is no payment list endpoint; history and receipts come from the bookings data.
 
 ## Components
 
 **Create (`components/payment/`):**
-- `pay-now-button.tsx` — props `{ booking, className? }`. Rendered only when the booking is `PENDING`
-  and has no `SUCCESS` payment. Shows the amount in BDT (from `booking.totalPrice`, 2-dp formatted), a
-  busy/loading state while initiating (disabled), and surfaces 400/409/502 `ApiError` messages verbatim
-  via sonner. Uses `useInitiatePayment`.
-- `payment-status-badge.tsx` — maps `TPaymentStatus` → badge colors: INITIATED=yellow, SUCCESS=green,
-  FAILED=red, CANCELLED=gray, REFUNDED=blue.
-- `payment-attempts.tsx` — props `{ payments: TPayment[] }` — rows with `PaymentStatusBadge`, amount,
-  `tranId`, timestamp; empty state ("No payments yet"); skeletons while bookings load.
-- `payment-receipt.tsx` — props `{ payment, booking }` — the receipt card: amount BDT, `tranId`,
-  `valId`, `cardType`, `bankTranId`, `paidAt`, booking ref + summary line, and the PAID booking message
-  ("Payment received — the agent will confirm shortly"). Used on `/payment/success` and on the booking
-  detail page when a `SUCCESS`/`REFUNDED` payment exists.
+- `pay-now-button.tsx` — props `{ booking: TBooking, className? }`. Rendered only when
+  `booking.status === "PENDING"` and no `SUCCESS` payment exists. Shows the amount in BDT
+  (`booking.totalPrice`, 2-dp) and a busy/`disabled` state while initiating (prevents
+  double-submit; the server's 409 "already paid"/ledger supersede guards the race). On success
+  the browser leaves for the gateway. Uses `useCreatePayment`.
+- `payment-status-badge.tsx` — maps `TPaymentStatus` → colors: INITIATED=yellow, SUCCESS=green,
+  FAILED=red, CANCELLED=gray, REFUNDED=blue (same `STATUS_CONFIG` pattern as
+  `booking-status-badge.tsx`, not a parallel badge system).
+- `payment-attempts.tsx` — props `{ payments: TPayment[] }`. Rows with the status badge, amount,
+  `tranId`, and timestamp; empty state ("No payments yet"); skeletons while the booking loads.
+- `payment-receipt.tsx` — props `{ payment: TPayment, booking: TBooking }`. Receipt card: amount
+  BDT, `tranId`, `valId`/`cardType`/`bankTranId`/`paidAt` when present, booking ref + summary
+  line, and the PAID message ("Payment received — the agent will confirm shortly"). Used on
+  `/payment/success` and on the booking detail page when a `SUCCESS`/`REFUNDED` payment exists.
 
 **Create (`app/(publicGroup)/payment/`), all `"use client"`:**
-- `success/page.tsx` — reads `getActivePayment()`; none → friendly "no active payment session" card with
-  links (back to `/user-dashboard/bookings`); one present → `useVerifyPayment`, single-shot per mount
-  (ref-guarded); success → replace session UI with `PaymentReceipt`; 401 → login prompt; 400 → verify-
-  failed message + retry button; loading → skeleton.
-- `cancel/page.tsx` — on mount: `clearActivePayment()`, show "Payment cancelled" card from query
-  `tran_id` if any + link back to the booking. Booking remains PENDING — the user can retry from there.
-- `fail/page.tsx` — on mount: `clearActivePayment()`, show "Payment failed" card + retry link.
-- `page.tsx` — `/payment`: `getActivePayment()` present → "Continue your payment" card with a link back
-  to the booking (the booking detail's Pay-now re-runs initiate if the TTL session lapsed); none → empty
-  state pointing to `/user-dashboard/bookings`.
+- `success/page.tsx` — `useParams().bookingId` (query param passed through the 302); no param →
+  "no booking reference" card with a link to `/user-dashboard/bookings`. Fetch the booking via
+  `bookingsApi.getBookingById` (`useQuery`, key `["booking", id]`); loading → skeleton. If
+  `booking.status === "PAID"` and a `SUCCESS` payment exists → `PaymentReceipt`; otherwise a
+  status card ("Not paid yet" / pending) with links back. Handle a 401 from the booking fetch by
+  showing a sign-in prompt (`/login?redirectTo=<current>`), since `/payment/*` is public and the
+  cookies may not have survived.
+- `cancel/page.tsx` — fetch the booking, show "Payment cancelled" card ("Your booking remains
+  PENDING") with a link back to the booking detail to retry.
+- `fail/page.tsx` — fetch the booking, show "Payment failed" card + retry link back to the booking
+  detail.
+
+**Delete:** the current `app/(publicGroup)/payment/page.tsx` placeholder — it has three `default`
+exports (invalid) and reads a nonexistent localStorage session.
 
 **Create (`app/(dashboardGroup)`):**
-- `user-dashboard/payments/page.tsx` — table of the user's bookings with their latest payment status
-  (from `useMyBookings`): booking id, package, amount, `PaymentStatusBadge`, `paidAt`, link to booking
-  detail for the receipt. Empty + error + retry states.
+- `user-dashboard/payments/page.tsx` — table of the user's bookings (`useMyBookings` query key
+  `["my-bookings"]`) with their latest payment status: booking id, package, amount BDT,
+  `PaymentStatusBadge`, `paidAt`, link to the booking detail for the receipt. Empty + error +
+  retry states.
 
 **Modify:**
-- `app/(dashboardGroup)/user-dashboard/bookings/[id]/page.tsx` — add `PayNowButton` (PENDING), a
-  `PaymentAttempts` section, and a `PaymentReceipt` when a terminal payment exists.
-- Booking tables/`StatusBadge` (Steps 8/10) — add the `PAID` booking status: **purple** badge (matches
-  the GearUp palette the codebase was cloned from: PENDING=yellow, PAID=purple, CONFIRMED=blue,
-  COMPLETED=green, CANCELLED=red). No new transitions are offered via `PATCH /:id/status` — `PAID` is
-  driven by the payment module, so no new table action buttons.
+- `app/(dashboardGroup)/user-dashboard/bookings/[id]/page.tsx` — add `PayNowButton` (PENDING
+  only), a `PaymentAttempts` section, and a `PaymentReceipt` when a terminal payment exists.
+- Booking table/badge (Step 8) — the `PAID` booking status is already wired (purple badge) and is
+  driven by the payment module, so **no** new `PATCH /:id/status` transitions and no new table
+  action buttons.
 
 ## Files to change
 
-- `lib/api/bookings.ts`
+- `proxy.ts` — add `/payment` to `PUBLIC_PREFIXES`
+- `lib/api/payments.ts` — single-source `TPayment`/`TPaymentStatus` from `./bookings`; drop the
+  `TPaymentStatusBadge` alias; add `valId` to the receipt type if the server change lands
 - `app/(dashboardGroup)/user-dashboard/bookings/[id]/page.tsx`
-- Booking table + status badge components from Steps 8/10
-- `.opencode/specs/00-overview.md` — add step 13 to the build order
-- `.opencode/specs/06-public-pages.md` — move the 3 payment routes out of `[LATER]`
-- `.opencode/specs/10-dashboards.md` — move `/user-dashboard/payments` out of `[LATER]` into this step
-- `.opencode/specs/12-explicitly-cut.md` — drop "Payment pages (3)" / payment history from the cut list
+- `.opencode/specs/00-overview.md` — Step 13 line already present
+- `.opencode/specs/10-dashboards.md` — `/user-dashboard/payments` promoted into this step (done)
 
 ## Files to create
 
-- `.opencode/specs/13-payment-gateway.md`
-- `lib/api/payments.ts`
-- `lib/payment-session.ts`
+- `lib/api/payments.ts` (exists) — tidy per above
 - `hooks/usePayments.ts`
-- `app/(publicGroup)/payment/page.tsx`
-- `app/(publicGroup)/payment/success/page.tsx`
-- `app/(publicGroup)/payment/cancel/page.tsx`
-- `app/(publicGroup)/payment/fail/page.tsx`
-- `app/(dashboardGroup)/user-dashboard/payments/page.tsx`
 - `components/payment/pay-now-button.tsx`
 - `components/payment/payment-status-badge.tsx`
 - `components/payment/payment-attempts.tsx`
 - `components/payment/payment-receipt.tsx`
+- `app/(publicGroup)/payment/success/page.tsx`
+- `app/(publicGroup)/payment/cancel/page.tsx`
+- `app/(publicGroup)/payment/fail/page.tsx`
+- `app/(dashboardGroup)/user-dashboard/payments/page.tsx`
+- (Optional) `lib/format.ts` — `formatBDT` shared by payment + booking money fields
 
 ## New dependencies
 
-No new dependencies. Client uses the existing `apiClient` + TanStack Query; payment pages need no
-gateway SDK (SSLCommerz hosts the form). No new client env vars — `SSLCOMMERZ_*` stays server-side.
+No new dependencies. The client uses the existing `apiClient` + TanStack Query; the gateway form
+is SSLCommerz-hosted so no SDK is needed, and `SSLCOMMERZ_*` env stays server-side.
 
 ## Rules for implementation
 
 ### Data fetching
-- All payment calls go through `lib/api/payments.ts` → `apiClient`; never raw `fetch` in components.
-- `useMutation` always wires `onSuccess` with `queryClient.invalidateQueries` (my-bookings + booking detail).
-- Mutation buttons must show loading state + `disabled`; prevent double-submit client-side in addition to
-  the server's TTL/409 guard.
-- Skeleton states while payments/bookings load; empty state for every payment list; error state with a
-  retry button that surfaces the `ApiError.message` verbatim (400/409/502).
+- All payment calls go through `lib/api/payments.ts` → `apiClient`; never raw `fetch`.
+- `useMutation` (create) redirects the browser on success; there is no verify mutation — the
+  result pages just fetch the booking. If any future mutation is added it must wire
+  `onSuccess` with `queryClient.invalidateQueries` (`["my-bookings"]`, `["booking", id]`).
+- Mutation buttons show loading + `disabled`; prevent double-submit client-side in addition to the
+  server's ledger guard.
+- Skeleton states while bookings load; `EmptyState` for every list; error states with a retry
+  button surfacing `ApiError.message` verbatim (400/403/409/502).
 
-### Session & SSR
-- The payment pages are `"use client"`; `lib/payment-session.ts` reads/writes localStorage only on the
-  client, never during render-hydration mismatch (guard `typeof window`), and tolerates a missing/corrupt
-  JSON value.
-- Verify runs at most once per mount (ref guard) — a re-render from the verify mutation must not re-fire.
-- Handle 401 on verify by showing a login prompt, since `/payment/*` is public and cookies may not have
-  survived; never discard the active session marker until a real terminal state.
+### SSR & the public pages
+- All `/payment/*` pages are `"use client"`. No localStorage anywhere — the `bookingId` comes from
+  the redirect query, so there is no hydration/session concern.
+- Handle a 401/expired session on the booking fetch with a login prompt; `/payment/*` is public
+  so the cookies may not have survived the gateway bounce.
+- `proxy.ts` must whitelist `/payment` or the auth guard intercepts the gateway return.
 
 ### UI & animation
-- All clickable elements: `cursor-pointer` + `transition-colors duration-200`; buttons `whileTap={{ scale: 0.97 }}`.
-- Cards `whileHover={{ y: -4 }}`; lists `motion.div` with `staggerChildren: 0.08`; icons from
-  `@phosphor-icons/react` (HTTP icon for Pay now, CheckCircle/XCircle/Bank for success/cancel/fail).
-- StatusBadge additions: booking `PAID`=purple; payments INITIATED=yellow, SUCCESS=green, FAILED=red,
-  CANCELLED=gray, REFUNDED=blue.
-- shadcn/ui from `components/ui/` (button, card, badge, skeleton, dialog, sonner) — never new primitives.
-- Tailwind v4 tokens (`bg-primary`, `text-muted-foreground`…), dark via `dark:`, `cn()` from `@/lib/utils`.
+- All clickable elements: `cursor-pointer` + `transition-colors duration-200`; buttons
+  `whileTap={{ scale: 0.97 }}`; cards `whileHover={{ y: -4 }}`; lists `motion.div` with
+  `staggerChildren: 0.08`; icons from `@phosphor-icons/react` (CreditCard for Pay now,
+  CheckCircle/XCircle/Bank for success/cancel/fail).
+- Payment badges: INITIATED=yellow, SUCCESS=green, FAILED=red, CANCELLED=gray, REFUNDED=blue.
+- shadcn/ui from `components/ui/` (button, card, badge, skeleton, sonner) — never new primitives.
+- Tailwind v4 tokens (`bg-primary`, `text-muted-foreground`…), dark via `dark:`, `cn()` from
+  `@/lib/utils`.
 
 ### Money
-- Amounts display in BDT with 2-dp formatting; the charged amount always reads from `booking.totalPrice`
-  (or the frozen `payment.amount`) — never compute client-side, never send to the API.
+- Amounts display in BDT with 2-dp formatting via a single shared helper; the charged amount
+  always reads from `booking.totalPrice` (or the frozen `payment.amount`) — never computed
+  client-side, never sent to the API. Existing booking tables/detail pages currently format USD —
+  switch them to the BDT helper so the receipt and table agree.
 
 ## Definition of done
 
-Runnable via `npm run dev` with the server running the Step 16 payment module and sandbox store creds:
+Runnable via `npm run dev` with the server running the Step 16 payment module and sandbox store
+creds (`BACKEND_PUBLIC_URL` set to a publicly reachable URL for the gateway callbacks):
 
-- Booking detail of a fresh `PENDING` booking shows **Pay now** with the correct BDT total.
-- Pay now redirects to the SSLCommerz sandbox gateway; with an active session another `/initiate` →
-  409 shown verbatim (and the button is disabled client-side too).
-- Paying on the sandbox returns to `/payment/success`, which verifies and renders the `PaymentReceipt`
-  (tranId, cardType, amount); the booking flips to `PAID`, the badge is purple, and re-visiting the
-  success URL idempotently shows the receipt or "already paid".
-- Clicking Cancel on the sandbox gateway lands on `/payment/cancel` → session cleared, booking still
-  PENDING, and re-initiate from the booking works (stale INITIATED sessions are auto-cancelled by the
-  server TTL).
-- Gateway failure path lands on `/payment/fail` → session cleared, retry link works.
-- `/user-dashboard/bookings` shows the PAID badge; `/user-dashboard/bookings/[id]` shows the attempt
-  list and (for PAID/REFUNDED) the receipt; `/user-dashboard/payments` lists bookings with payment status.
-- Cancelling a PAID booking (Step 10) shows the payment as REFUNDED in the attempts/receipt.
+- A fresh `PENDING` booking on `/user-dashboard/bookings/[id]` shows **Pay now** with the correct
+  BDT total; clicking it redirects to the SSLCommerz sandbox checkout.
+- Double-submit is blocked client-side, and a second `/create` on a live session surfaces the
+  server's 409 verbatim.
+- Paying on the sandbox returns to `/payment/success?bookingId=` → the receipt renders (tranId,
+  cardType, amount), the booking flips to `PAID` (purple badge), and re-visiting the URL
+  idempotently shows the receipt or a "not paid" card.
+- Clicking Cancel at the gateway lands on `/payment/cancel?bookingId=` → booking stays `PENDING`,
+  retry from the booking detail works (stale `INITIATED` sessions are superseded by a fresh
+  `/create`).
+- Gateway failure path lands on `/payment/fail?bookingId=` → booking stays `PENDING`, retry link
+  works.
+- `/user-dashboard/bookings` shows the `PAID` badge; `/user-dashboard/bookings/[id]` shows the
+  attempt list and (for PAID/REFUNDED) the receipt; `/user-dashboard/payments` lists bookings
+  with payment status.
+- Cancelling a `PAID` booking (Step 10) shows its payment as `REFUNDED` in attempts/receipt.
+- `proxy.ts` lets an unauthenticated (but cookie-less) browser reach `/payment/*` without a
+  `/login` redirect.
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
