@@ -48,8 +48,8 @@ export function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) 
         onMouseLeave={() => setPaused(false)}
       >
         <Quotes
-          size={48}
-          className="absolute -top-4 left-4 text-primary/20"
+          size={56}
+          className="absolute -top-5 left-6 text-primary/20"
         />
         <AnimatePresence mode="wait">
           <motion.figure
@@ -58,13 +58,13 @@ export function TestimonialCarousel({ testimonials }: TestimonialCarouselProps) 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.5 }}
-            className="flex flex-col items-center gap-4 rounded-lg bg-card p-8 text-center ring-1 ring-foreground/5 sm:p-12"
+            className="flex flex-col items-center gap-5 rounded-lg bg-card p-8 text-center ring-1 ring-foreground/5 sm:p-12"
           >
             <Rating value={current.rating} size={18} />
-            <blockquote className="max-w-2xl text-base text-muted-foreground leading-relaxed">
+            <blockquote className="max-w-2xl font-display text-xl leading-relaxed text-foreground/90 sm:text-2xl">
               &ldquo;{current.comment}&rdquo;
             </blockquote>
-            <figcaption className="text-xs font-semibold tracking-widest uppercase text-primary">
+            <figcaption className="text-xs font-semibold tracking-widest text-primary uppercase">
               {current.name}
             </figcaption>
           </motion.figure>

@@ -57,7 +57,7 @@ export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
         </div>
 
         <Link href={`/packages/${pkg.slug}`}>
-          <h3 className="font-semibold tracking-wide truncate hover:text-primary transition-colors">
+          <h3 className="truncate font-display text-lg font-medium tracking-wide transition-colors group-hover/card:text-primary">
             {pkg.title}
           </h3>
         </Link>
@@ -80,13 +80,18 @@ export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
           </div>
         )}
 
-        <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/60">
-          <span className="font-semibold tabular-nums text-primary">
-            {formatBDT(Number(pkg.price))}
-          </span>
+        <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
+          <div>
+            <span className="block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
+              from
+            </span>
+            <span className="font-display text-lg font-medium tabular-nums text-primary">
+              {formatBDT(Number(pkg.price))}
+            </span>
+          </div>
           <Link
             href={`/packages/${pkg.slug}`}
-            className="text-xs font-semibold tracking-widest uppercase text-primary hover:text-primary/80 transition-colors"
+            className="text-xs font-semibold tracking-widest uppercase text-primary transition-colors hover:text-primary/80"
           >
             View Details &rarr;
           </Link>

@@ -41,7 +41,7 @@ export function BlogCard({ post }: BlogCardProps) {
           {formatDate(post.createdAt)}
         </span>
         <Link href={`/blog/${post.slug}`}>
-          <h3 className="font-semibold tracking-wide line-clamp-2 hover:text-primary transition-colors">
+          <h3 className="line-clamp-2 font-display text-lg font-medium tracking-wide transition-colors hover:text-primary">
             {post.title}
           </h3>
         </Link>

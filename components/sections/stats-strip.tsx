@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useInView, useMotionValue, useSpring } from "framer-motion"
+import Image from "next/image"
 
 interface StatsStripProps {
   stats: {
@@ -50,15 +51,24 @@ export function StatsStrip({ stats }: StatsStripProps) {
   ]
 
   return (
-    <section className="bg-primary py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-primary py-16">
+      <Image
+        src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1920&q=80"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover opacity-15"
+        aria-hidden
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-primary" />
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-10 text-center lg:grid-cols-4">
           {items.map((item) => (
             <div key={item.label}>
-              <p className="text-4xl font-bold tabular-nums text-primary-foreground">
+              <p className="font-display text-5xl font-medium tabular-nums text-primary-foreground">
                 <CountUp value={item.value} format={item.format} />
               </p>
-              <p className="mt-2 text-xs font-semibold tracking-widest uppercase text-primary-foreground/70">
+              <p className="mt-2 text-xs font-semibold tracking-widest text-primary-foreground/70 uppercase">
                 {item.label}
               </p>
             </div>

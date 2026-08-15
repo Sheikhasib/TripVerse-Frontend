@@ -19,6 +19,8 @@ const steps = [
   },
 ]
 
+// Editorial numbered band — each step gets a large ghost numeral behind it,
+// serif titles, and a connective line across the three columns.
 export function HowItWorks() {
   return (
     <section className="bg-muted/40 py-20">
@@ -29,19 +31,25 @@ export function HowItWorks() {
           subtitle="From browsing to exploring in three simple steps"
           align="center"
         />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="relative grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="absolute top-12 right-[16%] left-[16%] hidden h-px bg-border md:block" />
           {steps.map((step, i) => (
             <div
               key={step.title}
-              className="flex flex-col items-center gap-3 p-8 text-center ring-1 ring-foreground/5 bg-card rounded-lg"
+              className="relative flex flex-col items-center gap-3 rounded-lg bg-card p-8 text-center ring-1 ring-foreground/5"
             >
-              <div className="flex size-14 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <step.icon size={28} />
-              </div>
-              <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
-                Step {i + 1}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute top-3 right-5 font-display text-6xl font-medium text-foreground/[0.06]"
+              >
+                {i + 1}
               </span>
-              <h3 className="text-lg font-semibold tracking-wide">{step.title}</h3>
+              <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
+                <step.icon size={26} />
+              </div>
+              <h3 className="mt-1 font-display text-xl font-medium tracking-wide">
+                {step.title}
+              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {step.text}
               </p>

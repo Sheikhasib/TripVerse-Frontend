@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/app/providers/query-provider"
@@ -10,6 +10,10 @@ import type { Metadata, Viewport } from "next"
 
 const geistSans = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+})
 
 export const metadata: Metadata = {
   title: {
@@ -37,7 +41,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", geistSans.variable, "font-sans", geistMono.variable)}
+      className={cn(
+        "antialiased",
+        geistSans.variable,
+        "font-sans",
+        geistMono.variable,
+        playfair.variable,
+      )}
     >
       <body>
         <QueryProvider>

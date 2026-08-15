@@ -29,6 +29,7 @@ import {
   Compass,
   Gauge,
   List,
+  MagnifyingGlass,
   Moon,
   SignIn,
   SignOut,
@@ -72,8 +73,16 @@ export function Navbar() {
   const { resolvedTheme, setTheme } = useTheme()
   const { user } = useMe()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [query, setQuery] = useState("")
 
   const isLoggedIn = Boolean(user)
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const qs = query.trim() ? `?search=${encodeURIComponent(query.trim())}` : ""
+    router.push(`/packages${qs}`)
+    setMobileOpen(false)
+  }
 
   const handleLogout = async () => {
     try {
@@ -120,6 +129,20 @@ export function Navbar() {
             </li>
           ))}
         </ul>
+
+        <form
+          onSubmit={handleSearch}
+          className="hidden w-full max-w-52 items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 transition-colors focus-within:border-primary/40 lg:flex"
+        >
+          <MagnifyingGlass size={16} className="shrink-0 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search destinations..."
+            aria-label="Search packages"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+          />
+        </form>
 
         <div className="flex items-center gap-2">
           <Button
@@ -252,6 +275,22 @@ export function Navbar() {
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-4">
+              <form
+                onSubmit={handleSearch}
+                className="mb-3 flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-2"
+              >
+                <MagnifyingGlass
+                  size={16}
+                  className="shrink-0 text-muted-foreground"
+                />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search destinations..."
+                  aria-label="Search packages"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+                />
+              </form>
               <ul className="flex flex-col gap-1">
                 {navItems.map((item) => (
                   <li key={item.href}>
