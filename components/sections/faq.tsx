@@ -55,7 +55,7 @@ export function FaqSection() {
                 aria-expanded={open}
                 className="flex w-full cursor-pointer items-center justify-between gap-4 py-5 text-left"
               >
-                <span className="text-sm font-semibold tracking-wide">
+                <span className="font-display text-base font-medium tracking-wide">
                   {faq.question}
                 </span>
                 {open ? (

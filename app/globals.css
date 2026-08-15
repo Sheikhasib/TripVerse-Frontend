@@ -122,6 +122,7 @@
 
 @theme {
   --animate-marquee: marquee 40s linear infinite;
+  --animate-marquee-slow: marquee 60s linear infinite;
 }
 
 @keyframes marquee {
