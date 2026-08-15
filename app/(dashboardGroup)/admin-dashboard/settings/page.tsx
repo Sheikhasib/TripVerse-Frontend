@@ -1,4 +1,5 @@
 import { ProfileForm } from "@/components/dashboard/profile-form"
+import { GoBack } from "@/components/shared/go-back"
 
 export const metadata = {
   title: "Settings",
@@ -7,6 +8,7 @@ export const metadata = {
 export default function AdminSettingsPage() {
   return (
     <div className="space-y-6">
+      <GoBack href="/admin-dashboard" label="Back to overview" />
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Settings

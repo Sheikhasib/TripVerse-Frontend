@@ -51,5 +51,13 @@ export default function EditPackagePage() {
     )
   }
 
-  return <PackageForm mode="edit" packageRow={row} />
+  return (
+    <div className="space-y-6">
+      <GoBack
+        href="/agent-dashboard/my-packages"
+        label="Back to My Packages"
+      />
+      <PackageForm mode="edit" packageRow={row} />
+    </div>
+  )
 }

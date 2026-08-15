@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   applicationName: "TripVerse",
   keywords: ["travel", "tour packages", "trip booking", "TripVerse"],
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
   },
 }
 

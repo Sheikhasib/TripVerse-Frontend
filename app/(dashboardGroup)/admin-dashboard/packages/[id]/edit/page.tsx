@@ -51,5 +51,13 @@ export default function AdminEditPackagePage() {
     )
   }
 
-  return <PackageForm mode="edit" packageRow={row} isAdmin />
+  return (
+    <div className="space-y-6">
+      <GoBack
+        href="/admin-dashboard/packages"
+        label="Back to Manage Packages"
+      />
+      <PackageForm mode="edit" packageRow={row} isAdmin />
+    </div>
+  )
 }
