@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
 import { BookingTable } from "@/components/dashboard/booking-table"
+import { Pagination } from "@/components/shared/pagination"
+
+const PAGE_SIZE = 10
 
 const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -17,15 +20,19 @@ const FILTERS: { value: TBookingStatus | "ALL"; label: string }[] = [
 
 export default function UserBookingsPage() {
   const [status, setStatus] = useState<TBookingStatus | "ALL">("ALL")
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-bookings", status],
+    queryKey: ["my-bookings", status, page],
     queryFn: () =>
       bookingsApi.getMyBookings(
-        status === "ALL" ? { limit: 50 } : { status, limit: 50 },
+        status === "ALL" ? { page, limit: PAGE_SIZE } : { status, page, limit: PAGE_SIZE },
       ),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
+
+  const totalPages = data?.meta?.totalPages ?? 1
 
   return (
     <div className="space-y-6">
@@ -45,7 +52,10 @@ export default function UserBookingsPage() {
           <button
             key={filter.value}
             type="button"
-            onClick={() => setStatus(filter.value)}
+            onClick={() => {
+              setStatus(filter.value)
+              setPage(1)
+            }}
             className={cn(
               "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
               status === filter.value
@@ -64,6 +74,8 @@ export default function UserBookingsPage() {
         viewer="user"
         invalidateKeys={[["my-bookings"]]}
       />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

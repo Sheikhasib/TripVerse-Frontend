@@ -12,6 +12,7 @@ import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { Pagination } from "@/components/shared/pagination"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import {
   Table,
@@ -33,6 +34,8 @@ import type { TInternalPackage } from "@/lib/api/packages"
 
 const formatPrice = (price: number) => formatBDT(Number(price))
 
+const PAGE_SIZE = 10
+
 const formatDate = (value?: string) =>
   value
     ? new Intl.DateTimeFormat("en-US", {
@@ -45,10 +48,12 @@ const formatDate = (value?: string) =>
 export default function MyPackagesPage() {
   const queryClient = useQueryClient()
   const [toDelete, setToDelete] = useState<TInternalPackage | null>(null)
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-packages"],
-    queryFn: () => packagesApi.getMyPackages({ limit: 50 }),
+    queryKey: ["my-packages", page],
+    queryFn: () => packagesApi.getMyPackages({ page, limit: PAGE_SIZE }),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
 
@@ -191,6 +196,12 @@ export default function MyPackagesPage() {
           </Table>
         </div>
       )}
+
+      <Pagination
+        page={page}
+        totalPages={data?.meta?.totalPages ?? 1}
+        onPageChange={setPage}
+      />
 
       <Dialog
         open={Boolean(toDelete)}

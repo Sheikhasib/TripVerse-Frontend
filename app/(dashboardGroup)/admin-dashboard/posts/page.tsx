@@ -10,8 +10,11 @@ import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { PaginationPages } from "@/components/shared/pagination"
 import { Package, Check, X } from "@phosphor-icons/react"
 import { toast } from "sonner"
+
+const PAGE_SIZE = 9
 
 const FILTERS: { value: TBlogPostStatus | "ALL"; label: string }[] = [
   { value: "ALL", label: "All" },
@@ -21,15 +24,18 @@ const FILTERS: { value: TBlogPostStatus | "ALL"; label: string }[] = [
 
 export default function AdminPostsPage() {
   const [status, setStatus] = useState<TBlogPostStatus | "ALL">("ALL")
+  const [page, setPage] = useState(1)
   const queryClient = useQueryClient()
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-posts", status],
+    queryKey: ["admin-posts", status, page],
     queryFn: () =>
       blogApi.getAllPosts({
         status: status === "ALL" ? undefined : status,
-        limit: 50,
+        page,
+        limit: PAGE_SIZE,
       }),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
   })
 
@@ -90,7 +96,10 @@ export default function AdminPostsPage() {
           <button
             key={filter.value}
             type="button"
-            onClick={() => setStatus(filter.value)}
+            onClick={() => {
+              setStatus(filter.value)
+              setPage(1)
+            }}
             className={cn(
               "cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
               status === filter.value
@@ -185,6 +194,12 @@ export default function AdminPostsPage() {
           ))}
         </div>
       )}
+
+      <PaginationPages
+        page={page}
+        totalPages={data?.meta?.totalPages ?? 1}
+        onPageChange={setPage}
+      />
     </div>
   )
 }

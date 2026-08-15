@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { ArrowRight, Receipt } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
@@ -9,6 +10,7 @@ import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/shared/empty-state"
+import { Pagination } from "@/components/shared/pagination"
 import { PaymentStatusBadge } from "@/components/payment/payment-status-badge"
 import { formatBDT, formatDate } from "@/lib/format"
 import {
@@ -20,10 +22,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+const PAGE_SIZE = 10
+
 export default function UserPaymentsPage() {
+  const [page, setPage] = useState(1)
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["my-bookings"],
-    queryFn: () => bookingsApi.getMyBookings({ limit: 50 }),
+    queryKey: ["my-bookings", page],
+    queryFn: () => bookingsApi.getMyBookings({ page, limit: PAGE_SIZE }),
+    placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
     retry: false,
   })
@@ -173,6 +179,12 @@ export default function UserPaymentsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Pagination
+        page={page}
+        totalPages={data?.meta?.totalPages ?? 1}
+        onPageChange={setPage}
+      />
     </div>
   )
 }
