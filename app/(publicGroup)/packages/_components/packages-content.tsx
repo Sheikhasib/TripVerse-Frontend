@@ -42,6 +42,7 @@ export function PackagesContent({
 
   const packages = data?.data ?? initialData
   const totalPages = Math.max(1, data?.meta?.totalPages ?? initialTotalPages)
+  const totalCount = data?.meta?.total ?? packages.length
 
   const handleParamsChange = useCallback(
     (patch: Partial<TPublicPackageQuery>) => {
@@ -76,11 +77,26 @@ export function PackagesContent({
 
   return (
     <div className="space-y-8">
-      <PackageFilters
-        params={params}
-        categories={categories}
-        onParamsChange={handleParamsChange}
-      />
+      <div className="rounded-lg bg-card p-5 ring-1 ring-foreground/5">
+        <PackageFilters
+          params={params}
+          categories={categories}
+          onParamsChange={handleParamsChange}
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            {packages.length}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold tabular-nums text-foreground">
+            {totalCount}
+          </span>{" "}
+          packages
+        </p>
+      </div>
       <PackageGrid packages={packages} isLoading={isLoading} />
       <PaginationPages
         page={page}

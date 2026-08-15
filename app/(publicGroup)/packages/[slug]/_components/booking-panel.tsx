@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarBlank, Clock, MapPin, Spinner } from "@phosphor-icons/react"
+import { CalendarBlank, Clock, MapPin, Minus, Plus, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -56,6 +56,12 @@ export function BookingPanel({ pkg }: BookingPanelProps) {
   const travelers = useWatch({ control: form.control, name: "travelers" })
   const estimate = pkg.price * (travelers || 0)
 
+  const setTravelers = (next: number) => {
+    form.setValue("travelers", Math.min(20, Math.max(1, next)), {
+      shouldValidate: true,
+    })
+  }
+
   const onSubmit = async (values: TCreateBookingSchema) => {
     try {
       const booking = await bookingsApi.createBooking(values)
@@ -70,9 +76,9 @@ export function BookingPanel({ pkg }: BookingPanelProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-lg bg-card p-6 ring-1 ring-foreground/5 lg:sticky lg:top-24">
+    <div className="space-y-5 rounded-lg bg-card p-6 ring-1 ring-foreground/5 lg:sticky lg:top-24">
       <div className="flex items-baseline justify-between">
-        <span className="text-3xl font-bold tabular-nums text-primary">
+        <span className="font-display text-3xl font-medium tabular-nums text-primary">
           {formatBDT(pkg.price)}
         </span>
         <span className="text-sm text-muted-foreground">/ person</span>
@@ -135,21 +141,41 @@ export function BookingPanel({ pkg }: BookingPanelProps) {
                 <FormItem>
                   <FormLabel>Travelers</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={20}
-                      step={1}
-                      className="w-full"
-                      value={field.value || ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === ""
-                            ? undefined
-                            : Number(e.target.value),
-                        )
-                      }
-                    />
+                    <div className="flex items-center justify-between rounded-md border border-input bg-background">
+                      <button
+                        type="button"
+                        onClick={() => setTravelers((travelers || 1) - 1)}
+                        disabled={field.value === undefined || field.value <= 1}
+                        aria-label="Decrease travelers"
+                        className="grid size-10 shrink-0 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Minus size={15} />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        step={1}
+                        value={field.value || ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ""
+                              ? undefined
+                              : Number(e.target.value),
+                          )
+                        }
+                        className="w-16 bg-transparent text-center text-sm font-medium outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTravelers((travelers || 0) + 1)}
+                        disabled={field.value !== undefined && field.value >= 20}
+                        aria-label="Increase travelers"
+                        className="grid size-10 shrink-0 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        <Plus size={15} />
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -14,7 +14,17 @@ export function PackageGrid({ packages, isLoading }: PackageGridProps) {
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton key={i} className="h-80 rounded-lg" />
+          <div key={i} className="overflow-hidden rounded-lg ring-1 ring-foreground/5">
+            <Skeleton className="aspect-[16/10] w-full rounded-none" />
+            <div className="space-y-3 p-5">
+              <Skeleton className="h-5 w-3/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+              <div className="flex items-center justify-between pt-2">
+                <Skeleton className="h-5 w-16 rounded" />
+                <Skeleton className="h-3 w-20 rounded" />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
     )

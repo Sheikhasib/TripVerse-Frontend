@@ -6,7 +6,7 @@ import { PackageImageGallery } from "./_components/package-image-gallery"
 import { BookingPanel } from "./_components/booking-panel"
 import { PackageCard } from "@/components/shared/package-card"
 import { Rating } from "@/components/shared/rating"
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr"
+import { ArrowRight, MapPin } from "@phosphor-icons/react/dist/ssr"
 import { GoBack } from "@/components/shared/go-back"
 import type { TPublicPackage } from "@/lib/api/packages"
 import { formatBDT } from "@/lib/format"
@@ -72,18 +72,22 @@ export default async function PackageDetailPage({ params }: PageProps) {
           <PackageImageGallery images={pkg.images ?? []} title={pkg.title} />
 
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {pkg.category && (
-                <span className="rounded border border-border px-2 py-0.5 text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
+                <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold tracking-widest uppercase text-primary">
                   {pkg.category.name}
                 </span>
               )}
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-primary">
-                {pkg.duration} days · {pkg.location}
+              <span className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                {pkg.duration} days
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                <MapPin size={13} className="text-primary" />
+                {pkg.location}
               </span>
             </div>
 
-            <h1 className="text-3xl font-bold tracking-tight leading-tight sm:text-4xl">
+            <h1 className="font-display text-3xl font-medium tracking-tight leading-tight sm:text-4xl">
               {pkg.title}
             </h1>
 
@@ -127,7 +131,9 @@ export default async function PackageDetailPage({ params }: PageProps) {
         <section className="mt-16">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight">Related Packages</h2>
+              <h2 className="font-display text-2xl font-medium tracking-tight">
+                Related Packages
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 More from {pkg.category?.name ?? "this category"}
               </p>

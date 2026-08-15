@@ -68,6 +68,16 @@ export function PackageFilters({
       params.maxDuration,
   )
 
+  const activeFilterCount = [
+    search,
+    minPrice,
+    maxPrice,
+    params.category,
+    params.location,
+    params.minRating,
+    params.maxDuration,
+  ].filter(Boolean).length
+
   const handleClearAll = () => {
     setSearch("")
     setMinPrice("")
@@ -210,7 +220,11 @@ export function PackageFilters({
       </div>
 
       {hasActiveFilters && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-primary">
+            {activeFilterCount} active{" "}
+            {activeFilterCount === 1 ? "filter" : "filters"}
+          </span>
           <button
             type="button"
             onClick={handleClearAll}
