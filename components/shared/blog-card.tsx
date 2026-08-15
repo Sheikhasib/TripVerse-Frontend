@@ -1,4 +1,4 @@
-import { Link } from "react-transition-progress/next"
+import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, CalendarBlank, Compass } from "@phosphor-icons/react/dist/ssr"
 import type { TBlogPostListItem } from "@/lib/api/blog"

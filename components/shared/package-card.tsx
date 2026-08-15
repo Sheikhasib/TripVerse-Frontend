@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Link } from "react-transition-progress/next"
+import Link from "next/link"
 import Image from "next/image"
 import { Clock, MapPin, Star, Compass } from "@phosphor-icons/react"
 import type { TPublicPackage } from "@/lib/api/packages"

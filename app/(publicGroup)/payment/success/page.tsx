@@ -4,13 +4,12 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { CheckCircle } from "@phosphor-icons/react"
+import { CheckCircle, ArrowLeft } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PaymentReceipt } from "@/components/payment/payment-receipt"
-import { GoBack } from "@/components/shared/go-back"
 
 const PageSkeleton = () => (
   <div className="w-full space-y-4">
@@ -101,8 +100,21 @@ function PaymentSuccessContent() {
   if (booking.status === "PAID" && successPayment) {
     return (
       <div className="w-full space-y-6">
-        <GoBack href="/user-dashboard/bookings" label="Back to bookings" />
+        <Button asChild variant="ghost" className="-mx-3 w-fit px-3 text-muted-foreground">
+          <Link href="/user-dashboard/bookings">
+            <ArrowLeft size={15} className="text-primary" />
+            Back to bookings
+          </Link>
+        </Button>
         <PaymentReceipt payment={successPayment} booking={booking} />
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button asChild>
+            <Link href="/user-dashboard/bookings">View my bookings</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/user-dashboard">Go to dashboard</Link>
+          </Button>
+        </div>
       </div>
     )
   }

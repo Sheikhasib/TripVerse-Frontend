@@ -1,4 +1,4 @@
-import { Link } from "react-transition-progress/next"
+import Link from "next/link"
 import type { ReactNode } from "react"
 
 interface SectionHeadingProps {

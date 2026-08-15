@@ -4,12 +4,11 @@ import { Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { XCircle } from "@phosphor-icons/react"
+import { XCircle, ArrowLeft } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { GoBack } from "@/components/shared/go-back"
 
 const PageSkeleton = () => (
   <div className="w-full space-y-4">
@@ -92,11 +91,12 @@ function PaymentCancelContent() {
         <Button asChild>
           <Link href={bookingLink}>Retry payment</Link>
         </Button>
-        <GoBack
-          href="/user-dashboard/bookings"
-          label="Back to bookings"
-          variant="outline"
-        />
+        <Button asChild variant="outline">
+          <Link href="/user-dashboard/bookings">
+            <ArrowLeft size={15} />
+            Back to bookings
+          </Link>
+        </Button>
       </div>
     </div>
   )

@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/app/providers/query-provider"
 import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
-import { ProgressBar, ProgressBarProvider } from "react-transition-progress"
 import type { ReactNode } from "react"
 import type { Metadata, Viewport } from "next"
 
@@ -52,11 +51,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <QueryProvider>
           <ThemeProvider>
-            <ProgressBarProvider>
-              <ProgressBar className="fixed top-0 z-[100] h-0.5 bg-primary shadow-lg shadow-primary/25" />
-              {children}
-              <Toaster richColors closeButton position="top-right" />
-            </ProgressBarProvider>
+            {children}
+            <Toaster richColors closeButton position="top-right" />
           </ThemeProvider>
         </QueryProvider>
       </body>

@@ -1,5 +1,5 @@
 import Image from "next/image"
-import { Link } from "react-transition-progress/next"
+import Link from "next/link"
 import { ArrowRight, CalendarBlank } from "@phosphor-icons/react/dist/ssr"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { BlogCard } from "@/components/shared/blog-card"
