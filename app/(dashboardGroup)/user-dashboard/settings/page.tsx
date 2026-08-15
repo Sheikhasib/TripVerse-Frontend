@@ -1,4 +1,4 @@
-import { ProfileForm } from "@/components/dashboard/profile-form"
+import { AccountSettingsForm } from "@/components/dashboard/account-settings-form"
 import { GoBack } from "@/components/shared/go-back"
 
 export const metadata = {
@@ -14,12 +14,10 @@ export default function UserSettingsPage() {
           Settings
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Update your profile information.
+          Manage your account preferences.
         </p>
       </div>
-      <div className="max-w-2xl rounded-lg bg-card p-6 ring-1 ring-foreground/5 sm:p-8">
-        <ProfileForm />
-      </div>
+      <AccountSettingsForm />
     </div>
   )
 }
