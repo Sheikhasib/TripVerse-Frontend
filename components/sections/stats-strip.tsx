@@ -20,7 +20,7 @@ function CountUp({
   value: number
   format: (n: number) => string
 }) {
-  const ref = useRef<HTMLParagraphElement>(null)
+  const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: "-40px" })
   const motionValue = useMotionValue(0)
   const spring = useSpring(motionValue, { duration: 1.6, bounce: 0 })
@@ -32,7 +32,7 @@ function CountUp({
     return spring.on("change", (latest) => setDisplay(format(latest)))
   }, [inView, value, motionValue, spring, format])
 
-  return <p ref={ref}>{display}</p>
+  return <span ref={ref}>{display}</span>
 }
 
 const formatInt = (n: number) => Math.round(n).toLocaleString()
