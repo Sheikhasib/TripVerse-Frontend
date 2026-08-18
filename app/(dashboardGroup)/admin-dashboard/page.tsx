@@ -1,6 +1,7 @@
 "use client"
 
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
 import { QuickActions } from "@/components/dashboard/quick-actions"
 import { ChartCard } from "@/components/charts/chart-card"
@@ -12,6 +13,8 @@ import { UsersByRoleChart } from "@/components/charts/users-by-role-chart"
 export default function AdminDashboardPage() {
   const { data: overview, isLoading: isOverviewLoading } =
     useDashboardOverview("admin")
+
+  if (isOverviewLoading) return <RouteLoading />
 
   const chartsLoading = isOverviewLoading
   const revenueOverTime = overview?.revenueOverTime ?? []

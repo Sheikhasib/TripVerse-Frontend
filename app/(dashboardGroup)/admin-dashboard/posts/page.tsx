@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { blogApi, type TBlogPostStatus } from "@/lib/api/blog"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { PaginationPages } from "@/components/shared/pagination"
 import { Package, Check, X } from "@phosphor-icons/react"
@@ -68,16 +68,7 @@ export default function AdminPostsPage() {
   const posts = data?.data ?? []
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    )
+    return <RouteLoading />
   }
 
   return (

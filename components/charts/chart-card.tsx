@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 
 interface ChartCardProps {
   title: string
@@ -46,7 +46,7 @@ export function ChartCard({
       </CardHeader>
       <CardContent>
         {loading ? (
-          <Skeleton className="h-60 w-full" />
+          <RouteLoading className="min-h-60" />
         ) : error ? (
           <div className="flex h-60 items-center justify-center text-sm text-muted-foreground">
             Failed to load data.

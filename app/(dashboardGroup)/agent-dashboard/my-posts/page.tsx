@@ -10,7 +10,7 @@ import { ImageUploader } from "@/components/dashboard/image-uploader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { PaginationPages } from "@/components/shared/pagination"
 import { useMe } from "@/hooks/use-me"
@@ -73,16 +73,7 @@ export default function AgentMyPostsPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full rounded-lg" />
-          ))}
-        </div>
-      </div>
-    )
+    return <RouteLoading />
   }
 
   return (

@@ -6,7 +6,7 @@ import { usersApi, type TAdminUser, type TUserStatus } from "@/lib/api/users"
 import { ApiError } from "@/lib/api/client"
 import type { TRole } from "@/lib/validations/auth"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Pagination } from "@/components/shared/pagination"
 import { Users, Trash } from "@phosphor-icons/react"
@@ -67,12 +67,7 @@ export default function AdminUsersPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    )
+    return <RouteLoading />
   }
 
   return (

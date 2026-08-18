@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { MagnifyingGlass } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { BookingTable } from "@/components/dashboard/booking-table"
 import { Pagination } from "@/components/shared/pagination"
 import { Input } from "@/components/ui/input"
@@ -39,6 +40,8 @@ export default function AdminBookingsPage() {
   })
 
   const totalPages = data?.meta?.totalPages ?? 1
+
+  if (isLoading) return <RouteLoading />
 
   return (
     <div className="space-y-6">

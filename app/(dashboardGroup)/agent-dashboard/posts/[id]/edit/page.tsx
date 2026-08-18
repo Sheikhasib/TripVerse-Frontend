@@ -9,7 +9,7 @@ import { ImageUploader } from "@/components/dashboard/image-uploader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { GoBack } from "@/components/shared/go-back"
 import { useMe } from "@/hooks/use-me"
@@ -78,12 +78,7 @@ export default function AgentPostEditPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-96 w-full rounded-lg" />
-      </div>
-    )
+    return <RouteLoading />
   }
 
   if (!post) {

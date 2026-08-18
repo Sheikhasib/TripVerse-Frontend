@@ -1,6 +1,7 @@
 "use client"
 
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { OverviewCards } from "@/components/dashboard/overview-cards"
 import { QuickActions } from "@/components/dashboard/quick-actions"
 import { ChartCard } from "@/components/charts/chart-card"
@@ -10,6 +11,8 @@ import { StatusDonutChart } from "@/components/charts/status-donut-chart"
 export default function AgentDashboardPage() {
   const { data: overview, isLoading: isOverviewLoading } =
     useDashboardOverview("agent")
+
+  if (isOverviewLoading) return <RouteLoading />
 
   const chartsLoading = isOverviewLoading
   const revenueOverTime = overview?.revenueOverTime ?? []

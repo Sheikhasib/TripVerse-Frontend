@@ -5,7 +5,7 @@ import { useEffect, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, CheckCircle, Spinner } from "@phosphor-icons/react"
+import { ArrowLeft, CheckCircle, Compass, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import {
@@ -17,7 +17,6 @@ import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -293,7 +292,10 @@ export function PackageForm({
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   {categoriesLoading ? (
-                    <Skeleton className="h-9 w-full" />
+                    <div className="flex h-9 w-full items-center gap-2 rounded-md bg-muted/40 px-3 text-sm text-muted-foreground">
+                      <Compass className="size-4 animate-[spin_2s_linear_infinite]" />
+                      Loading categories…
+                    </div>
                   ) : (
                     <>
                       <Select

@@ -10,6 +10,7 @@ import { profileSchema, type TProfileSchema } from "@/lib/validations/public"
 import { usersApi } from "@/lib/api/users"
 import { ApiError } from "@/lib/api/client"
 import { useMe } from "@/hooks/use-me"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -36,11 +37,7 @@ export function ProfileForm() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner className="size-6 animate-spin text-primary" />
-      </div>
-    )
+    return <RouteLoading />
   }
 
   if (!user) {

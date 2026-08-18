@@ -11,7 +11,7 @@ import {
   Users,
 } from "@phosphor-icons/react"
 import type { Icon } from "@phosphor-icons/react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { useMe } from "@/hooks/use-me"
 import type { TRole } from "@/lib/validations/auth"
 
@@ -71,13 +71,7 @@ export function QuickActions() {
   const { user, isLoading } = useMe()
 
   if (isLoading || !user) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {[0, 1].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-lg" />
-        ))}
-      </div>
-    )
+    return <RouteLoading className="min-h-40" />
   }
 
   const actions = QUICK_ACTIONS[user.role] ?? []

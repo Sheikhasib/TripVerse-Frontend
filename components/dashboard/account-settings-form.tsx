@@ -12,7 +12,7 @@ import { roleDashboard } from "@/utils/role"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import {
   Form,
   FormControl,
@@ -107,12 +107,7 @@ export function AccountSettingsForm() {
   })
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-24 w-full rounded-lg" />
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    )
+    return <RouteLoading />
   }
 
   if (!user) {

@@ -1,5 +1,5 @@
 import { RouteLoading } from "@/components/shared/route-loading"
 
-export default function PackageDetailLoading() {
+export default function AboutLoading() {
   return <RouteLoading />
 }

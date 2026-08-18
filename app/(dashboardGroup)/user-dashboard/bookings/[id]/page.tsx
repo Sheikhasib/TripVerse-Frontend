@@ -16,7 +16,7 @@ import { toast } from "sonner"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { GoBack } from "@/components/shared/go-back"
 import { BookingStatusBadge } from "@/components/dashboard/booking-status-badge"
@@ -57,16 +57,7 @@ export default function UserBookingDetailPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-5 w-40" />
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Skeleton className="h-64 rounded-xl lg:col-span-2" />
-          <Skeleton className="h-64 rounded-xl" />
-        </div>
-        <Skeleton className="h-40 rounded-xl" />
-      </div>
-    )
+    return <RouteLoading />
   }
 
   if (!booking) {

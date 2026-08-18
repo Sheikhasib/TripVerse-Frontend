@@ -10,7 +10,7 @@ import { packagesApi } from "@/lib/api/packages"
 import { ApiError } from "@/lib/api/client"
 import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Pagination } from "@/components/shared/pagination"
 import { StatusBadge } from "@/components/dashboard/status-badge"
@@ -94,11 +94,7 @@ export default function MyPackagesPage() {
       </div>
 
       {isLoading ? (
-        <div className="rounded-lg bg-card p-4 ring-1 ring-foreground/5">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="mb-3 h-14 rounded-md last:mb-0" />
-          ))}
-        </div>
+        <RouteLoading className="min-h-60" />
       ) : packages.length === 0 ? (
         <EmptyState
           icon={<PencilLine size={40} />}

@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { blogApi } from "@/lib/api/blog"
 import { BlogCard } from "@/components/shared/blog-card"
 import { EmptyState } from "@/components/shared/empty-state"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { PaginationPages } from "@/components/shared/pagination"
 import { Input } from "@/components/ui/input"
 import { Newspaper } from "@phosphor-icons/react"
@@ -116,11 +116,7 @@ export function BlogContent({
       </div>
 
       {isLoading && posts.length === 0 ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} className="h-80 rounded-lg" />
-          ))}
-        </div>
+        <RouteLoading />
       ) : posts.length === 0 ? (
         <EmptyState
           icon={<Newspaper size={40} />}

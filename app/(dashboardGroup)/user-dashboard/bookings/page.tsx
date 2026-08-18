@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { bookingsApi, type TBookingStatus } from "@/lib/api/bookings"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { BookingTable } from "@/components/dashboard/booking-table"
 import { Pagination } from "@/components/shared/pagination"
 
@@ -33,6 +34,8 @@ export default function UserBookingsPage() {
   })
 
   const totalPages = data?.meta?.totalPages ?? 1
+
+  if (isLoading) return <RouteLoading />
 
   return (
     <div className="space-y-6">

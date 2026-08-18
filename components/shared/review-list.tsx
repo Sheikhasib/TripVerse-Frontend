@@ -6,7 +6,7 @@ import { reviewsApi, type TReview } from "@/lib/api/reviews"
 import { Rating } from "@/components/shared/rating"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { EmptyState } from "@/components/shared/empty-state"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { PaginationPages } from "@/components/shared/pagination"
 import { Star } from "@phosphor-icons/react"
 
@@ -44,13 +44,7 @@ export function ReviewList({ packageId }: ReviewListProps) {
   const totalPages = Math.max(1, data?.meta?.totalPages ?? 1)
 
   if (isLoading && reviews.length === 0) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-28 rounded-lg" />
-        ))}
-      </div>
-    )
+    return <RouteLoading className="min-h-60" />
   }
 
   if (reviews.length === 0) {

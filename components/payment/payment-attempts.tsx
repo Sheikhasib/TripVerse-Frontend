@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Receipt } from "@phosphor-icons/react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { PaymentStatusBadge } from "./payment-status-badge"
 import { formatBDT, formatDateTime } from "@/lib/format"
@@ -30,13 +30,7 @@ export function PaymentAttempts({
   isLoading = false,
 }: PaymentAttemptsProps) {
   if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2].map((i) => (
-          <Skeleton key={i} className="h-14 rounded-lg" />
-        ))}
-      </div>
-    )
+    return <RouteLoading className="min-h-40" />
   }
 
   if (payments.length === 0) {

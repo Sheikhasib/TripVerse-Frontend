@@ -8,7 +8,7 @@ import { ArrowRight, Receipt } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Pagination } from "@/components/shared/pagination"
 import { PaymentStatusBadge } from "@/components/payment/payment-status-badge"
@@ -35,13 +35,7 @@ export default function UserPaymentsPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="rounded-lg bg-card p-4 ring-1 ring-foreground/5">
-        {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="mb-3 h-14 rounded-md last:mb-0" />
-        ))}
-      </div>
-    )
+    return <RouteLoading />
   }
 
   if (error) {

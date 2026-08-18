@@ -16,7 +16,7 @@ import {
 } from "@phosphor-icons/react"
 import type { Icon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { BookingStatusBadge } from "@/components/dashboard/booking-status-badge"
 import { TripJourney } from "@/components/dashboard/trip-journey"
 import { formatBDT } from "@/lib/format"
@@ -171,17 +171,7 @@ export function OverviewCards({
   role,
 }: OverviewCardsProps) {
   if (isLoading || !overview) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-lg border border-border bg-card p-5">
-            <Skeleton className="mb-3 size-11 rounded-md" />
-            <Skeleton className="h-7 w-20" />
-            <Skeleton className="mt-2 h-3 w-28" />
-          </div>
-        ))}
-      </div>
-    )
+    return <RouteLoading className="min-h-60" />
   }
 
   if (role === "user") {

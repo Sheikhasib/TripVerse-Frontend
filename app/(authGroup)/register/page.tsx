@@ -1,15 +1,13 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 import { RegisterForm } from "@/components/auth/register-form"
 
 export const metadata: Metadata = { title: "Register" }
 
 export default function RegisterPage() {
   return (
-    <Suspense
-      fallback={<Skeleton className="h-[34rem] w-full max-w-md" />}
-    >
+    <Suspense fallback={<RouteLoading className="min-h-[40vh]" />}>
       <RegisterForm />
     </Suspense>
   )

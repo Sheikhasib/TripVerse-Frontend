@@ -8,14 +8,9 @@ import { WarningCircle, ArrowLeft } from "@phosphor-icons/react"
 import { bookingsApi } from "@/lib/api/bookings"
 import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { RouteLoading } from "@/components/shared/route-loading"
 
-const PageSkeleton = () => (
-  <div className="w-full space-y-4">
-    <Skeleton className="h-24 rounded-xl" />
-    <Skeleton className="h-40 rounded-xl" />
-  </div>
-)
+const PageSkeleton = () => <RouteLoading className="min-h-[40vh]" />
 
 const signInUrl = (bookingId: string) =>
   `/login?redirectTo=${encodeURIComponent(`/payment/fail?bookingId=${bookingId}`)}`
