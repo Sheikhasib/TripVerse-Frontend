@@ -22,6 +22,10 @@ export function PackageFilters({
   const [search, setSearch] = useState(params.search ?? "")
   const [minPrice, setMinPrice] = useState(params.minPrice?.toString() ?? "")
   const [maxPrice, setMaxPrice] = useState(params.maxPrice?.toString() ?? "")
+  const [location, setLocation] = useState(params.location ?? "")
+  const [maxDuration, setMaxDuration] = useState(
+    params.maxDuration?.toString() ?? "",
+  )
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,6 +58,26 @@ export function PackageFilters({
     return () => clearTimeout(timer)
   }, [maxPrice, params.maxPrice, onParamsChange])
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (location !== (params.location ?? "")) {
+        onParamsChange({ location: location || undefined })
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [location, params.location, onParamsChange])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (maxDuration !== (params.maxDuration?.toString() ?? "")) {
+        onParamsChange({
+          maxDuration: maxDuration ? Number(maxDuration) : undefined,
+        })
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [maxDuration, params.maxDuration, onParamsChange])
+
   const setParam = (key: keyof TPublicPackageQuery, value: string) => {
     onParamsChange({ [key]: value || undefined } as Partial<TPublicPackageQuery>)
   }
@@ -63,9 +87,9 @@ export function PackageFilters({
       minPrice ||
       maxPrice ||
       params.category ||
-      params.location ||
+      location ||
       params.minRating ||
-      params.maxDuration,
+      maxDuration,
   )
 
   const activeFilterCount = [
@@ -73,15 +97,17 @@ export function PackageFilters({
     minPrice,
     maxPrice,
     params.category,
-    params.location,
+    location,
     params.minRating,
-    params.maxDuration,
+    maxDuration,
   ].filter(Boolean).length
 
   const handleClearAll = () => {
     setSearch("")
     setMinPrice("")
     setMaxPrice("")
+    setLocation("")
+    setMaxDuration("")
     onParamsChange({
       search: undefined,
       category: undefined,
@@ -135,8 +161,8 @@ export function PackageFilters({
           </label>
           <Input
             placeholder="e.g. Khulna"
-            value={params.location ?? ""}
-            onChange={(e) => setParam("location", e.target.value)}
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
         </div>
 
@@ -213,8 +239,8 @@ export function PackageFilters({
             type="number"
             min={1}
             placeholder="Any"
-            value={params.maxDuration?.toString() ?? ""}
-            onChange={(e) => setParam("maxDuration", e.target.value)}
+            value={maxDuration}
+            onChange={(e) => setMaxDuration(e.target.value)}
           />
         </div>
       </div>
