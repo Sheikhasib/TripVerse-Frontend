@@ -2,6 +2,7 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { QueryProvider } from "@/app/providers/query-provider"
+import { AuraBackground } from "@/components/shared/aura-background"
 import { cn } from "@/lib/utils"
 import { Toaster } from "sonner"
 import type { ReactNode } from "react"
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       )}
     >
       <body>
+        <AuraBackground />
         <QueryProvider>
           <ThemeProvider>
             {children}
