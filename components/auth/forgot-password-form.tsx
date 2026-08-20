@@ -12,6 +12,7 @@ import {
 } from "@/lib/validations/auth"
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
+import { sentAtNow } from "@/utils/sent-at"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -25,7 +26,10 @@ import {
 import { AuthCard } from "./auth-card"
 
 const ForgotPasswordForm = () => {
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null)
+  const [submitted, setSubmitted] = useState<{
+    email: string
+    sentAt: number
+  } | null>(null)
 
   const form = useForm<TForgotPasswordSchema>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -35,7 +39,7 @@ const ForgotPasswordForm = () => {
   const onSubmit = async (values: TForgotPasswordSchema) => {
     try {
       await authApi.forgotPassword(values)
-      setSubmittedEmail(values.email)
+      setSubmitted({ email: values.email, sentAt: sentAtNow() })
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
@@ -43,8 +47,10 @@ const ForgotPasswordForm = () => {
     }
   }
 
-  if (submittedEmail) {
-    const resetUrl = `/reset-password?email=${encodeURIComponent(submittedEmail)}`
+  if (submitted) {
+    const resetUrl = `/reset-password?email=${encodeURIComponent(
+      submitted.email,
+    )}&sentAt=${submitted.sentAt}`
     return (
       <AuthCard
         title="Check your email"
@@ -66,7 +72,7 @@ const ForgotPasswordForm = () => {
             <p>Didn&apos;t get it? Check your spam folder, or</p>
             <button
               type="button"
-              onClick={() => setSubmittedEmail(null)}
+              onClick={() => setSubmitted(null)}
               className="font-medium text-primary hover:underline"
             >
               Try a different email

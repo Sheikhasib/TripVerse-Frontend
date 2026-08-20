@@ -29,15 +29,17 @@ import { OtpInput } from "./otp-input"
 
 type TResetPasswordFormProps = {
   email: string
+  sentAt?: number
 }
 
-const ResetPasswordForm = ({ email }: TResetPasswordFormProps) => {
+const ResetPasswordForm = ({ email, sentAt }: TResetPasswordFormProps) => {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const { secondsLeft, resending, resend } = useOtpResend(
     (resendEmail) => authApi.forgotPassword({ email: resendEmail }),
     email,
     "A new reset code has been sent.",
+    sentAt,
   )
 
   const form = useForm<TResetPasswordFormSchema>({

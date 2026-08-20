@@ -25,14 +25,16 @@ import { useAfterAuth } from "./use-after-auth"
 
 type TVerifyEmailCardProps = {
   email: string
+  sentAt?: number
 }
 
-const VerifyEmailCard = ({ email }: TVerifyEmailCardProps) => {
+const VerifyEmailCard = ({ email, sentAt }: TVerifyEmailCardProps) => {
   const afterAuth = useAfterAuth()
   const { secondsLeft, resending, resend } = useOtpResend(
     (resendEmail) => authApi.resendVerification({ email: resendEmail }),
     email,
     "A new verification code has been sent.",
+    sentAt,
   )
 
   const form = useForm<TVerifyEmailSchema>({

@@ -9,17 +9,26 @@ const RESEND_SECONDS = 60
 
 // Shared resend UX for the OTP cards: 60s countdown after the initial send,
 // no auto-resend, verbatim error surfacing, fresh countdown on success.
+// `sentAt` (epoch ms, optional) seeds the first countdown from time actually
+// elapsed since the OTP was emailed, so a late arrival isn't locked out for a
+// full 60s.
 const useOtpResend = (
   resendAction: (email: string) => Promise<unknown>,
   email: string,
   successMessage: string,
+  sentAt?: number,
 ) => {
   const { secondsLeft, start } = useCountdown(RESEND_SECONDS)
   const [resending, setResending] = useState(false)
 
   useEffect(() => {
-    start()
-  }, [start])
+    if (sentAt != null) {
+      const elapsed = Math.floor((Date.now() - sentAt) / 1000)
+      start(Math.max(0, RESEND_SECONDS - elapsed))
+    } else {
+      start()
+    }
+  }, [sentAt, start])
 
   const resend = useCallback(async () => {
     setResending(true)

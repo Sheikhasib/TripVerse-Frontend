@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { registerSchema, type TRegisterSchema } from "@/lib/validations/auth"
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
+import { parseSentAt, sentAtNow } from "@/utils/sent-at"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -34,9 +35,12 @@ const RegisterForm = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
-  // Phase 2 (OTP). Survives a refresh by re-deriving from ?email=.
+  // Phase 2 (OTP). Survives a refresh by re-deriving from ?email=/&sentAt=.
   const [pendingEmail, setPendingEmail] = useState<string | null>(() =>
     searchParams.get("email"),
+  )
+  const [pendingSentAt, setPendingSentAt] = useState<number | undefined>(() =>
+    parseSentAt(searchParams.get("sentAt")),
   )
 
   const form = useForm<TRegisterSchema>({
@@ -44,12 +48,17 @@ const RegisterForm = () => {
     defaultValues: { name: "", email: "", password: "", phone: "", role: "USER" },
   })
 
+  const advanceToOtp = (email: string, sentAt: number) => {
+    setPendingEmail(email)
+    setPendingSentAt(sentAt)
+    router.replace(`/register?email=${encodeURIComponent(email)}&sentAt=${sentAt}`)
+  }
+
   const onSubmit = async (values: TRegisterSchema) => {
     try {
       const message = await authApi.register(values)
       toast.success(message)
-      setPendingEmail(values.email)
-      router.replace(`/register?email=${encodeURIComponent(values.email)}`)
+      advanceToOtp(values.email, sentAtNow())
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
@@ -60,14 +69,13 @@ const RegisterForm = () => {
         error instanceof ApiError &&
         error.message.includes("pending verification")
       ) {
-        setPendingEmail(values.email)
-        router.replace(`/register?email=${encodeURIComponent(values.email)}`)
+        advanceToOtp(values.email, sentAtNow())
       }
     }
   }
 
   if (pendingEmail) {
-    return <VerifyEmailCard email={pendingEmail} />
+    return <VerifyEmailCard email={pendingEmail} sentAt={pendingSentAt} />
   }
 
   return (
