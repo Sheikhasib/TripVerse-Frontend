@@ -62,9 +62,16 @@ const ForgotPasswordForm = () => {
           <Button asChild className="w-full">
             <Link href={resetUrl}>I have a code</Link>
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Didn&apos;t get it? Try again or check your spam folder.
-          </p>
+          <div className="space-y-1 text-center text-xs text-muted-foreground">
+            <p>Didn&apos;t get it? Check your spam folder, or</p>
+            <button
+              type="button"
+              onClick={() => setSubmittedEmail(null)}
+              className="font-medium text-primary hover:underline"
+            >
+              Try a different email
+            </button>
+          </div>
         </div>
       </AuthCard>
     )
