@@ -33,3 +33,47 @@ export const demoLoginSchema = z.object({
   role: roleSchema,
 })
 export type TDemoLoginSchema = z.infer<typeof demoLoginSchema>
+
+const emailField = z.email({ message: "Please provide a valid email" }).trim()
+
+export const otpSchema = z
+  .string({ message: "OTP is required" })
+  .length(6, "OTP must be exactly 6 digits")
+  .regex(/^\d{6}$/, "OTP must be exactly 6 digits")
+
+export const verifyEmailSchema = z.object({
+  email: emailField,
+  otp: otpSchema,
+})
+export type TVerifyEmailSchema = z.infer<typeof verifyEmailSchema>
+
+export const resendSchema = z.object({
+  email: emailField,
+})
+export type TResendSchema = z.infer<typeof resendSchema>
+
+export const forgotPasswordSchema = z.object({
+  email: emailField,
+})
+export type TForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>
+
+export const resetPasswordSchema = z.object({
+  email: emailField,
+  otp: otpSchema,
+  newPassword: z
+    .string({ message: "Password is required" })
+    .min(6, "Password must be at least 6 characters")
+    .max(72, "Password must be at most 72 characters"),
+})
+export type TResetPasswordSchema = z.infer<typeof resetPasswordSchema>
+
+// Client-only — the confirm field is never sent to the server.
+export const resetPasswordFormSchema = resetPasswordSchema
+  .extend({
+    confirmPassword: z.string({ message: "Please confirm your password" }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+export type TResetPasswordFormSchema = z.infer<typeof resetPasswordFormSchema>

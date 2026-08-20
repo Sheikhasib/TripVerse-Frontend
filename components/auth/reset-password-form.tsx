@@ -1,24 +1,21 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Eye, EyeSlash, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
-import { registerSchema, type TRegisterSchema } from "@/lib/validations/auth"
+import {
+  resetPasswordFormSchema,
+  type TResetPasswordFormSchema,
+} from "@/lib/validations/auth"
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
+import { useCountdown } from "@/hooks/use-countdown"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -28,27 +25,39 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { AuthCard } from "./auth-card"
-import { VerifyEmailCard } from "./verify-email-card"
+import { OtpInput } from "./otp-input"
 
-const RegisterForm = () => {
+const RESEND_SECONDS = 60
+
+type TResetPasswordFormProps = {
+  email: string
+}
+
+const ResetPasswordForm = ({ email }: TResetPasswordFormProps) => {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  const { secondsLeft, start } = useCountdown(RESEND_SECONDS)
   const [showPassword, setShowPassword] = useState(false)
-  // Phase 2 (OTP). Survives a refresh by re-deriving from ?email=.
-  const [pendingEmail, setPendingEmail] = useState<string | null>(() =>
-    searchParams.get("email"),
-  )
+  const [resending, setResending] = useState(false)
 
-  const form = useForm<TRegisterSchema>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", phone: "", role: "USER" },
+  const form = useForm<TResetPasswordFormSchema>({
+    resolver: zodResolver(resetPasswordFormSchema),
+    defaultValues: { email, otp: "", newPassword: "", confirmPassword: "" },
   })
 
-  const onSubmit = async (values: TRegisterSchema) => {
+  // The OTP was just sent by the forgot step — lock resend for the first 60s.
+  useEffect(() => {
+    start()
+  }, [start])
+
+  const onSubmit = async (values: TResetPasswordFormSchema) => {
     try {
-      await authApi.register(values)
-      setPendingEmail(values.email)
-      router.replace(`/register?email=${encodeURIComponent(values.email)}`)
+      await authApi.resetPassword({
+        email: values.email,
+        otp: values.otp,
+        newPassword: values.newPassword,
+      })
+      toast.success("Password reset — please log in with your new password")
+      router.replace("/login")
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
@@ -56,17 +65,28 @@ const RegisterForm = () => {
     }
   }
 
-  if (pendingEmail) {
-    return <VerifyEmailCard email={pendingEmail} />
+  const handleResend = async () => {
+    setResending(true)
+    try {
+      await authApi.forgotPassword({ email })
+      toast.success("A new reset code has been sent.")
+      start()
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError ? error.message : "Something went wrong.",
+      )
+    } finally {
+      setResending(false)
+    }
   }
 
   return (
     <AuthCard
-      title="Create your account"
-      description="Join TripVerse and start exploring"
+      title="Reset your password"
+      description={`Enter the 6-digit code sent to ${email}`}
       footer={
         <>
-          Already have an account?{" "}
+          Remembered it?{" "}
           <Link href="/login" className="font-medium text-primary hover:underline">
             Log in
           </Link>
@@ -77,12 +97,12 @@ const RegisterForm = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-4">
           <FormField
             control={form.control}
-            name="name"
+            name="otp"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Full name</FormLabel>
+                <FormLabel>Reset code</FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane Smith" autoComplete="name" {...field} />
+                  <OtpInput {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,28 +110,10 @@ const RegisterForm = () => {
           />
           <FormField
             control={form.control}
-            name="email"
+            name="newPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>New password</FormLabel>
                 <div className="relative">
                   <FormControl>
                     <Input
@@ -141,39 +143,18 @@ const RegisterForm = () => {
           />
           <FormField
             control={form.control}
-            name="phone"
+            name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone (optional)</FormLabel>
+                <FormLabel>Confirm new password</FormLabel>
                 <FormControl>
                   <Input
-                    type="tel"
-                    placeholder="+880 1XXX-XXXXXX"
-                    autoComplete="tel"
+                    type="password"
+                    placeholder="Re-enter your new password"
+                    autoComplete="new-password"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>I want to join as</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="USER">Traveller (User)</SelectItem>
-                    <SelectItem value="AGENT">Travel Agent</SelectItem>
-                  </SelectContent>
-                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -186,12 +167,29 @@ const RegisterForm = () => {
             {form.formState.isSubmitting ? (
               <Spinner className="size-4 animate-spin" />
             ) : null}
-            Create account
+            Reset password
           </Button>
         </form>
       </Form>
+
+      <div className="mt-4 text-center text-sm">
+        {secondsLeft > 0 ? (
+          <span className="text-muted-foreground">
+            Resend code in {secondsLeft}s
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            className="font-medium text-primary hover:underline disabled:pointer-events-none disabled:opacity-50"
+          >
+            {resending ? "Sending..." : "Resend code"}
+          </button>
+        )}
+      </div>
     </AuthCard>
   )
 }
 
-export { RegisterForm }
+export { ResetPasswordForm }

@@ -24,8 +24,12 @@ when nothing is staged). `forgot-password` is a deliberate uniform 200 — **nev
 an email exists. `reset-password` bumps `tokenVersion`, so every existing session dies the moment
 the password changes (TripVerse logout semantics).
 
-**Rate limits:** all five endpoints sit behind `authLimiter` (5 requests / 15 min) in the
-backend `app.ts`. The client must surface the 429 verbatim and never auto-fire resend in a loop.
+**Rate limits:** the backend `app.ts` splits auth endpoints across two limiters (single
+instances, each shared across its mounted paths): `authCredentialLimiter` (5 requests / 15 min)
+on `login`, `register`, `reset-password`; `authOtpLimiter` (10 requests / 15 min) on
+`verify-email`, `resend-verification`, `forgot-password`, `demo-login`, `google`. Of the five
+endpoints in this step, `reset-password` sits on the credential pool and the other four on the
+OTP pool. The client must surface the 429 verbatim and never auto-fire resend in a loop.
 
 **Mismatches fixed by this step (today):**
 - `lib/api/auth.ts` — `register` declares `apiClient<TAuthUser>` but the server now returns
@@ -46,7 +50,7 @@ backend `app.ts`. The client must surface the 429 verbatim and never auto-fire r
 - `components/auth/auth-card.tsx` — the shared auth shell for the two new public pages.
 - `proxy.ts` (Step 4) — must add the three new public paths.
 - Server: `auth` module (Step 21) — `POST /api/auth/verify-email`, `/resend-verification`,
-  `/forgot-password`, `/reset-password`; `authLimiter` on all five auth endpoints.
+  `/forgot-password`, `/reset-password`; `authCredentialLimiter` / `authOtpLimiter` in `app.ts`.
 - `next.config.ts` — the `/api/:path*` rewrite already proxies these; no change.
 
 ## Routes
@@ -65,29 +69,30 @@ re-derives `email` from the submitted value and survives refresh by reading `?em
 ## Server contract (actual, Step 21)
 
 ```
-POST /api/auth/register { name, email, password, phone?, role? }    public (authLimiter)
+POST /api/auth/register { name, email, password, phone?, role? }    public (authCredentialLimiter)
   → 201 { data: null } "Verification OTP sent to your email."   (no user row yet)
   Errors (verbatim): 400 "Role must be either USER or AGENT" · 409 "User with this email
   already exists" · 409 "Registration is pending verification. Check your email or resend
   the OTP." · 503 "Email verification is not configured."
   Side effects: hashes the password, stages it + the OTP in Redis for 5 min, emails the OTP.
 
-POST /api/auth/verify-email { email, otp }                       public (authLimiter)
+POST /api/auth/verify-email { email, otp }                       public (authOtpLimiter)
   → 200 { accessToken, refreshToken, user } + httpOnly cookies set — AUTO-LOGIN
   Errors (verbatim): 409 "Email is already verified" · 400 "Invalid or expired OTP." ·
   503 "Email verification is not configured."
   Side effects: creates the user row (emailVerified: true), deletes the Redis keys
   (OTP is single-use), sends the welcome email, issues tokens.
 
-POST /api/auth/resend-verification { email }                     public (authLimiter)
+POST /api/auth/resend-verification { email }                     public (authOtpLimiter)
   → 200 { data: null } "Verification OTP sent to your email."  — uniform, no-op if not staged
   Errors: 503 "Email verification is not configured."
 
-POST /api/auth/forgot-password { email }                         public (authLimiter)
+POST /api/auth/forgot-password { email }                         public (authOtpLimiter)
   → 200 { data: null } "If an account with that email exists, a password reset OTP has been
-  sent."  — always this message; no enumeration. Skips deleted / SUSPENDED / GOOGLE accounts.
+  sent."  — always this message; no enumeration. Skips deleted / SUSPENDED / GOOGLE / unverified
+  (emailVerified: false) accounts.
 
-POST /api/auth/reset-password { email, otp, newPassword }        public (authLimiter)
+POST /api/auth/reset-password { email, otp, newPassword }        public (authCredentialLimiter)
   → 200 { data: null } "Password reset successfully. Please login again."
   Errors (verbatim): 400 "Invalid or expired OTP." · 400 "New password ..." validation.
   Side effects: replaces the password hash, increments tokenVersion (kills every session),
@@ -95,7 +100,7 @@ POST /api/auth/reset-password { email, otp, newPassword }        public (authLim
 ```
 
 All five are **public**; the 429 body is `{ success: false, message: "Too many attempts.
-Please try again in 15 minutes." }` (authLimiter) — surface verbatim.
+Please try again in 15 minutes." }` (shared message for both limiters) — surface verbatim.
 
 ## New API functions (`lib/api/auth.ts`)
 

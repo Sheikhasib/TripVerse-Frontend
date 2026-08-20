@@ -43,6 +43,9 @@ const PUBLIC_EXACT_PATHS = [
   "/privacy",
   "/blog",
   "/not-found",
+  "/verify-email",
+  "/forgot-password",
+  "/reset-password",
 ]
 
 const PUBLIC_PREFIXES = ["/packages", "/blog", "/payment"]

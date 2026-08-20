@@ -125,6 +125,14 @@ const LoginForm = () => {
             ) : null}
             Log in
           </Button>
+          <div className="text-center">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </form>
       </Form>
 

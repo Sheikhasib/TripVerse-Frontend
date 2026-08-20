@@ -2,9 +2,13 @@ import { apiClient } from "./client"
 import { cookieUtils } from "@/utils/cookies"
 import type {
   TDemoLoginSchema,
+  TForgotPasswordSchema,
   TLoginSchema,
   TRegisterSchema,
+  TResendSchema,
+  TResetPasswordSchema,
   TRole,
+  TVerifyEmailSchema,
 } from "@/lib/validations/auth"
 
 export type TAuthUser = {
@@ -36,7 +40,31 @@ const login = (payload: TLoginSchema) =>
   })
 
 const register = (payload: TRegisterSchema) =>
-  apiClient<TAuthUser>("/api/auth/register", {
+  apiClient<null>("/api/auth/register", {
+    method: "POST",
+    body: payload,
+  })
+
+const verifyEmail = (payload: TVerifyEmailSchema) =>
+  apiClient<TLoginResult>("/api/auth/verify-email", {
+    method: "POST",
+    body: payload,
+  })
+
+const resendVerification = (payload: TResendSchema) =>
+  apiClient<null>("/api/auth/resend-verification", {
+    method: "POST",
+    body: payload,
+  })
+
+const forgotPassword = (payload: TForgotPasswordSchema) =>
+  apiClient<null>("/api/auth/forgot-password", {
+    method: "POST",
+    body: payload,
+  })
+
+const resetPassword = (payload: TResetPasswordSchema) =>
+  apiClient<null>("/api/auth/reset-password", {
     method: "POST",
     body: payload,
   })
@@ -79,6 +107,10 @@ const clearAccessTokenClient = () => {
 export const authApi = {
   login,
   register,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
   demoLogin,
   googleLogin,
   logout,
