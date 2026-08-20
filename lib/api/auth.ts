@@ -1,4 +1,4 @@
-import { apiClient } from "./client"
+import { apiClient, apiClientFull } from "./client"
 import { cookieUtils } from "@/utils/cookies"
 import type {
   TDemoLoginSchema,
@@ -39,11 +39,13 @@ const login = (payload: TLoginSchema) =>
     body: payload,
   })
 
-const register = (payload: TRegisterSchema) =>
-  apiClient<null>("/api/auth/register", {
+const register = async (payload: TRegisterSchema) => {
+  const envelope = await apiClientFull<null>("/api/auth/register", {
     method: "POST",
     body: payload,
   })
+  return envelope.message
+}
 
 const verifyEmail = (payload: TVerifyEmailSchema) =>
   apiClient<TLoginResult>("/api/auth/verify-email", {

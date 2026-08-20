@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Spinner } from "@phosphor-icons/react"
@@ -10,7 +9,7 @@ import { verifyEmailSchema, type TVerifyEmailSchema } from "@/lib/validations/au
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
 import { decodeJwtPayload } from "@/utils/token"
-import { useCountdown } from "@/hooks/use-countdown"
+import { useOtpResend } from "@/hooks/use-otp-resend"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -24,26 +23,22 @@ import { AuthCard } from "./auth-card"
 import { OtpInput } from "./otp-input"
 import { useAfterAuth } from "./use-after-auth"
 
-const RESEND_SECONDS = 60
-
 type TVerifyEmailCardProps = {
   email: string
 }
 
 const VerifyEmailCard = ({ email }: TVerifyEmailCardProps) => {
   const afterAuth = useAfterAuth()
-  const { secondsLeft, start } = useCountdown(RESEND_SECONDS)
-  const [resending, setResending] = useState(false)
+  const { secondsLeft, resending, resend } = useOtpResend(
+    (resendEmail) => authApi.resendVerification({ email: resendEmail }),
+    email,
+    "A new verification code has been sent.",
+  )
 
   const form = useForm<TVerifyEmailSchema>({
     resolver: zodResolver(verifyEmailSchema),
     defaultValues: { email, otp: "" },
   })
-
-  // The OTP was just sent — lock the resend button for the first 60s.
-  useEffect(() => {
-    start()
-  }, [start])
 
   const onSubmit = async (values: TVerifyEmailSchema) => {
     try {
@@ -58,17 +53,9 @@ const VerifyEmailCard = ({ email }: TVerifyEmailCardProps) => {
   }
 
   const handleResend = async () => {
-    setResending(true)
-    try {
-      await authApi.resendVerification({ email })
-      toast.success("A new verification code has been sent.")
-      start()
-    } catch (error) {
-      toast.error(
-        error instanceof ApiError ? error.message : "Something went wrong.",
-      )
-    } finally {
-      setResending(false)
+    const ok = await resend()
+    if (ok) {
+      form.setValue("otp", "")
     }
   }
 
@@ -113,7 +100,7 @@ const VerifyEmailCard = ({ email }: TVerifyEmailCardProps) => {
         </form>
       </Form>
 
-      <div className="mt-4 text-center text-sm">
+      <div className="mt-4 text-center text-sm" aria-live="polite">
         {secondsLeft > 0 ? (
           <span className="text-muted-foreground">
             Resend code in {secondsLeft}s

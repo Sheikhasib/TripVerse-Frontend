@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 type TOtpInputProps = React.ComponentProps<"input">
 
-const OtpInput = ({ className, ...props }: TOtpInputProps) => {
+const OtpInput = ({ className, onChange, ...props }: TOtpInputProps) => {
   return (
     <input
       type="text"
@@ -12,6 +12,13 @@ const OtpInput = ({ className, ...props }: TOtpInputProps) => {
       maxLength={6}
       autoComplete="one-time-code"
       autoFocus
+      onChange={(event) => {
+        const sanitized = event.target.value.replace(/\D/g, "")
+        if (sanitized !== event.target.value) {
+          event.target.value = sanitized
+        }
+        onChange?.(event)
+      }}
       className={cn(
         "h-11 w-full min-w-0 rounded-md border border-input bg-transparent px-3 text-center font-mono text-xl tracking-[0.5em] shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-2xl dark:bg-input/30",
         "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",

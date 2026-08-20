@@ -46,13 +46,23 @@ const RegisterForm = () => {
 
   const onSubmit = async (values: TRegisterSchema) => {
     try {
-      await authApi.register(values)
+      const message = await authApi.register(values)
+      toast.success(message)
       setPendingEmail(values.email)
       router.replace(`/register?email=${encodeURIComponent(values.email)}`)
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
       )
+      // A pending registration (server 409) already staged the account —
+      // jump straight to the OTP step instead of leaving the user stuck.
+      if (
+        error instanceof ApiError &&
+        error.message.includes("pending verification")
+      ) {
+        setPendingEmail(values.email)
+        router.replace(`/register?email=${encodeURIComponent(values.email)}`)
+      }
     }
   }
 

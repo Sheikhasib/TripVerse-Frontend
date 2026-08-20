@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Eye, EyeSlash, Spinner } from "@phosphor-icons/react"
@@ -13,7 +13,7 @@ import {
 } from "@/lib/validations/auth"
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
-import { useCountdown } from "@/hooks/use-countdown"
+import { useOtpResend } from "@/hooks/use-otp-resend"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -27,27 +27,23 @@ import {
 import { AuthCard } from "./auth-card"
 import { OtpInput } from "./otp-input"
 
-const RESEND_SECONDS = 60
-
 type TResetPasswordFormProps = {
   email: string
 }
 
 const ResetPasswordForm = ({ email }: TResetPasswordFormProps) => {
   const router = useRouter()
-  const { secondsLeft, start } = useCountdown(RESEND_SECONDS)
   const [showPassword, setShowPassword] = useState(false)
-  const [resending, setResending] = useState(false)
+  const { secondsLeft, resending, resend } = useOtpResend(
+    (resendEmail) => authApi.forgotPassword({ email: resendEmail }),
+    email,
+    "A new reset code has been sent.",
+  )
 
   const form = useForm<TResetPasswordFormSchema>({
     resolver: zodResolver(resetPasswordFormSchema),
     defaultValues: { email, otp: "", newPassword: "", confirmPassword: "" },
   })
-
-  // The OTP was just sent by the forgot step — lock resend for the first 60s.
-  useEffect(() => {
-    start()
-  }, [start])
 
   const onSubmit = async (values: TResetPasswordFormSchema) => {
     try {
@@ -66,17 +62,9 @@ const ResetPasswordForm = ({ email }: TResetPasswordFormProps) => {
   }
 
   const handleResend = async () => {
-    setResending(true)
-    try {
-      await authApi.forgotPassword({ email })
-      toast.success("A new reset code has been sent.")
-      start()
-    } catch (error) {
-      toast.error(
-        error instanceof ApiError ? error.message : "Something went wrong.",
-      )
-    } finally {
-      setResending(false)
+    const ok = await resend()
+    if (ok) {
+      form.setValue("otp", "")
     }
   }
 
@@ -172,7 +160,7 @@ const ResetPasswordForm = ({ email }: TResetPasswordFormProps) => {
         </form>
       </Form>
 
-      <div className="mt-4 text-center text-sm">
+      <div className="mt-4 text-center text-sm" aria-live="polite">
         {secondsLeft > 0 ? (
           <span className="text-muted-foreground">
             Resend code in {secondsLeft}s
