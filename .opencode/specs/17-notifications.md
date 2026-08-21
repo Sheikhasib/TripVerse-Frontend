@@ -2,10 +2,9 @@
 
 ## Status
 
-**NEW.** Promoted out of `12-explicitly-cut.md`. The backend ships the `notification` module
+**DONE.** Promoted out of `12-explicitly-cut.md`. The backend ships the `notification` module
 (server Step ~20): a per-user in-app notification ledger fed by booking and package lifecycle
-events (new booking to the agent, confirmation/cancellation to the customer, approval/rejection
-to the agent). The client has no notification API, no bell, and no page.
+events.
 
 ## Overview
 
@@ -215,3 +214,29 @@ Runnable via `npm run dev` with the server running the notification module and s
   returns to `/notifications` after sign-in.
 - The badge refreshes without a reload (30 s poll) and while browsing public pages.
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+
+## As built (implementation notes)
+
+- **Agent booking links land on the bookings LIST**, not `/agent-dashboard/bookings/:id`
+  as this spec's resolver table first said — that detail route does not exist on the client
+  (`agent-dashboard/bookings/` has no `[id]` segment). `resolveNotificationLink` drops the id
+  for agent booking links; user booking links keep theirs (`user-dashboard/bookings/[id]`
+  exists); package links map to `/agent-dashboard/packages/:id/edit` (exists).
+- **`unread=false` is NOT "read rows only"** — the server's ternary
+  (`...(query.unread ? { isRead: false } : {})`) treats false as *no filter at all* and
+  returns every row. Only `unread=true` filters. The client therefore sends `undefined` for
+  the All tab and `"true"` for Unread, never `"false"`.
+- **`limit>50` is rejected with 400** ("Number must be less than or equal to 50"), not
+  silently capped as this spec first said. The client never exceeds 50.
+- The stale `redirectTo` worry above was disproven live: adding `/notifications` to
+  `PROTECTED_PREFIXES` alone yields `307 → /login?redirectTo=%2Fnotifications`, and the
+  generic post-auth redirect returns the visitor to the page.
+- Mobile treatment: Radix dropdowns misbehave inside the navbar Sheet, so mobile gets a
+  compact "Notifications" link in the sheet nav; desktop gets the full bell dropdown beside
+  the theme toggle; dashboards render the same bell beside `DashboardUserMenu`.
+- Verified live against :4000: USER books → AGENT unread 24→25 with BOOKING_CREATED +
+  `/dashboard/agent/bookings/:id`; ADMIN confirms → USER notified (BOOKING_CONFIRMED +
+  `/dashboard/bookings/:id`); foreign-id mark-read → 404 "Notification not found." verbatim;
+  read-all idempotent ×2; `unread=true/false` semantics confirmed with real data; anonymous
+  401 on all four routes. Test booking + its two notifications deleted afterwards; per-role
+  unread baselines restored exactly.
