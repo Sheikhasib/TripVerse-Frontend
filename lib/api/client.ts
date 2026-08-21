@@ -82,6 +82,17 @@ const request = async <T>(
     throw new ApiError(0, "Network error. Please check your connection.")
   }
 
+  // 204 No Content carries no body to parse — treat it as a success envelope
+  // (the wishlist DELETE answers 204; see Step 16).
+  if (res.status === 204) {
+    return {
+      success: true,
+      statusCode: 204,
+      message: "No content",
+      data: null,
+    } as TApiEnvelope<T>
+  }
+
   let envelope: TApiEnvelope<T>
   try {
     envelope = (await res.json()) as TApiEnvelope<T>
