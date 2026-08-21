@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { jwtUtils } from "./utils/jwt"
-import { getNewAccessToken, type TTokenPair } from "./service/refreshToken"
+import {
+  getNewAccessToken,
+  type TRefreshResult,
+  type TTokenPair,
+} from "./service/refreshToken"
 
 const isProduction = process.env.NODE_ENV === "production"
 
@@ -34,6 +38,34 @@ const clientCookieOptions = {
 const ACCESS_COOKIE = "accessToken"
 const REFRESH_COOKIE = "refreshToken"
 const ACCESS_CLIENT_COOKIE = "accessTokenClient"
+
+// Refresh tokens are single-use under server-side rotation: every refresh
+// revokes the presented token, and replaying a revoked one trips reuse
+// detection, which nukes the whole token family. The two module-scoped caches
+// below keep parallel middleware invocations from doing exactly that to
+// themselves.
+//
+// In-flight: concurrent invocations sharing one still-valid token await the
+// same backend call instead of presenting it twice.
+const inFlightRefresh = new Map<string, Promise<TRefreshResult>>()
+
+// Grace cache: old token → rotated pair, briefly. A request that lands after a
+// rotation settled but before the browser applied the new cookie still carries
+// the just-revoked token; serving it from this cache reserves reuse detection
+// for genuine (stolen-token) replays.
+const REFRESH_GRACE_MS = 10_000
+const recentlyRotated = new Map<
+  string,
+  { pair: TTokenPair; expiresAt: number }
+>()
+
+const pruneRotated = (now: number) => {
+  for (const [token, entry] of recentlyRotated) {
+    if (entry.expiresAt <= now) {
+      recentlyRotated.delete(token)
+    }
+  }
+}
 
 const PUBLIC_EXACT_PATHS = [
   "/",
@@ -142,7 +174,32 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!auth && refreshToken) {
-    const result = await getNewAccessToken(refreshToken)
+    const pending = inFlightRefresh.get(refreshToken)
+    let result: TRefreshResult
+    if (pending) {
+      // Collapse concurrent refreshes into the single in-flight rotation.
+      result = await pending
+    } else {
+      const now = Date.now()
+      pruneRotated(now)
+      const cached = recentlyRotated.get(refreshToken)
+      if (cached && cached.expiresAt > now) {
+        // Rotated moments ago — replaying it to the backend would trip reuse
+        // detection, so serve the cached pair instead.
+        result = { status: "ok", tokenPair: cached.pair }
+      } else {
+        const fresh = getNewAccessToken(refreshToken)
+        inFlightRefresh.set(refreshToken, fresh)
+        result = await fresh
+        inFlightRefresh.delete(refreshToken)
+        if (result.status === "ok") {
+          recentlyRotated.set(refreshToken, {
+            pair: result.tokenPair,
+            expiresAt: Date.now() + REFRESH_GRACE_MS,
+          })
+        }
+      }
+    }
     if (result.status === "ok") {
       const role = verify(result.tokenPair.accessToken)
       if (role !== null) {
