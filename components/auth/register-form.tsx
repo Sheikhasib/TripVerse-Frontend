@@ -75,7 +75,19 @@ const RegisterForm = () => {
   }
 
   if (pendingEmail) {
-    return <VerifyEmailCard email={pendingEmail} sentAt={pendingSentAt} />
+    return (
+      <VerifyEmailCard
+        email={pendingEmail}
+        sentAt={pendingSentAt}
+        onRestart={() => {
+          setPendingEmail(null)
+          setPendingSentAt(undefined)
+          // Drop ?email=&sentAt= so a refresh stays on phase 1; form values are
+          // kept so a typo in the email can simply be corrected.
+          router.replace("/register")
+        }}
+      />
+    )
   }
 
   return (

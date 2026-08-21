@@ -120,17 +120,22 @@ Please try again in 15 minutes." }` (shared message for both limiters) — surfa
   resetPassword(payload: TResetPasswordSchema)  → POST /api/auth/reset-password → null
 ```
 
-Fix the existing `register` signature: it returns `null` now, **not** `TAuthUser`. Keep
+Fix the existing `register` signature: the server returns `data: null`, **not** `TAuthUser`;
+as built it goes through `apiClientFull` and returns `envelope.message`, so phase 1 can toast
+the server's own "Verification OTP sent to your email." copy. Keep
 `TLoginResult = TTokenPair & { user?: TAuthUser }` (already correct for verify/login).
 
 ## New validation schemas (`lib/validations/auth.ts`)
 
 ```
-otpSchema = z.string().length(6).regex(/^\d{6}$/)            // exactly 6 digits
+otpSchema = z.string().length(6).regex(/^\d{6}$/)            // exactly 6 digits (mirrors the
+                                                             // server's doubly-anchored check)
 verifyEmailSchema    = { email: z.email().trim(), otp: otpSchema }
 resendSchema         = { email: z.email().trim() }
 forgotPasswordSchema = { email: z.email().trim() }
 resetPasswordSchema  = { email, otp: otpSchema, newPassword: z.string().min(6).max(72) }
+resetPasswordFormSchema = resetPasswordSchema.extend({ confirmPassword: z.string() })
+                          .refine(d => d.newPassword === d.confirmPassword)  // client-only
 ```
 
 ## Components
@@ -140,11 +145,16 @@ resetPasswordSchema  = { email, otp: otpSchema, newPassword: z.string().min(6).m
   `autoComplete="one-time-code"`); used by both the verify step and reset. No split-box
   over-engineering — one controlled field with a digit pattern; change values are sanitized
   to digits (`value.replace(/\D/g, "")`).
-- `verify-email-card.tsx` — props `{ email: string, sentAt?: number }`. Reads OTP, calls
-  `verifyEmail`, on success `useAfterAuth(data.accessToken, decodeJwtPayload(...).role,
-  "Email verified — welcome to TripVerse")`. Shows a **Resend** link (countdown via
-  `useOtpResend`, announced with `aria-live="polite"`; then `resendVerification`). Surfaces
-  400/409/503/429 verbatim. `AuthCard` shell + sonner toasts.
+- `verify-email-card.tsx` — props `{ email: string, sentAt?: number, onRestart?: () => void }`.
+  Reads OTP, calls `verifyEmail`, on success `useAfterAuth(data.accessToken,
+  decodeJwtPayload(...).role, "Email verified — welcome to TripVerse")`. Shows a **Resend**
+  link (countdown via `useOtpResend`, announced with `aria-live="polite"`; then
+  `resendVerification`). Surfaces 400/409/503/429 verbatim. A permanent "Start over"
+  affordance sits under the resend row ("Wrong email?" normally; upgraded to "This code may
+  have expired" once `sentAt + 5 min` has passed — see known limitation below).
+  `onRestart` (register phase 2) returns to phase 1 with form values kept; when omitted
+  (standalone `/verify-email`) it renders as a link to `/register`. `AuthCard` shell +
+  sonner toasts.
 - `forgot-password-form.tsx` — email form → `forgotPassword` → always the uniform-success
   info card ("If an account with that email exists…") with a button to
   `/reset-password?email=<encoded>&sentAt=<epoch ms>`, a "Try a different email" button that
@@ -208,6 +218,17 @@ None. Existing `apiClient`, TanStack Query (not needed — these are form-submit
   seeds from the latest send rather than the original one.
 - `react-hooks/purity` flags `Date.now()` anywhere inside a component body (event handlers
   included), so event-time stamps go through the module-level `sentAtNow()` wrapper instead.
+
+### Known limitation: expired staging dead-end (register flow only)
+The staged registration shares the OTP's 5-minute Redis TTL. After expiry, verify correctly
+fails with 400 "Invalid or expired OTP.", but resend-verification no-ops silently (uniform
+200 by design — nothing is staged anymore), so the client's "A new verification code has
+been sent." toast becomes a false success and no email ever arrives. Mitigated client-side:
+once `sentAt + 5 min` has passed the card upgrades its "Start over" affordance to "This code
+may have expired"; register phase 2's restart returns to phase 1 with the form values kept
+(URL params dropped so a refresh stays there). Recovery without it: a clean `/register`
+resubmit succeeds once staging has expired. The reset flow self-heals — forgot-password
+re-mints for eligible accounts — so this is register-only.
 
 ### SSR & routing
 - The three new pages are async server components: they `await searchParams`, `redirect()` to

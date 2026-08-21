@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Spinner } from "@phosphor-icons/react"
@@ -9,6 +10,7 @@ import { verifyEmailSchema, type TVerifyEmailSchema } from "@/lib/validations/au
 import { authApi } from "@/lib/api/auth"
 import { ApiError } from "@/lib/api/client"
 import { decodeJwtPayload } from "@/utils/token"
+import { sentAtNow } from "@/utils/sent-at"
 import { useOtpResend } from "@/hooks/use-otp-resend"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,19 +25,36 @@ import { AuthCard } from "./auth-card"
 import { OtpInput } from "./otp-input"
 import { useAfterAuth } from "./use-after-auth"
 
+// Mirrors the server's OTP_EXPIRATION_SECONDS (5 min Redis TTL).
+const OTP_TTL_MS = 5 * 60 * 1000
+
 type TVerifyEmailCardProps = {
   email: string
   sentAt?: number
+  // Register phase 2 passes this to return to phase 1; standalone /verify-email
+  // omits it and gets a link to /register instead.
+  onRestart?: () => void
 }
 
-const VerifyEmailCard = ({ email, sentAt }: TVerifyEmailCardProps) => {
+const VerifyEmailCard = ({ email, sentAt, onRestart }: TVerifyEmailCardProps) => {
   const afterAuth = useAfterAuth()
+  const [stale, setStale] = useState(false)
   const { secondsLeft, resending, resend } = useOtpResend(
     (resendEmail) => authApi.resendVerification({ email: resendEmail }),
     email,
     "A new verification code has been sent.",
     sentAt,
   )
+
+  // The staged registration shares the OTP's 5-minute TTL; past it, resend no-ops
+  // silently (uniform 200), so warn instead of letting the false-success toast mislead.
+  useEffect(() => {
+    if (sentAt == null) return undefined
+    const check = () => setStale(sentAtNow() - sentAt > OTP_TTL_MS)
+    check()
+    const id = setInterval(check, 1000)
+    return () => clearInterval(id)
+  }, [sentAt])
 
   const form = useForm<TVerifyEmailSchema>({
     resolver: zodResolver(verifyEmailSchema),
@@ -117,6 +136,25 @@ const VerifyEmailCard = ({ email, sentAt }: TVerifyEmailCardProps) => {
             {resending ? "Sending..." : "Resend code"}
           </button>
         )}
+        <div className="mt-2 text-xs text-muted-foreground">
+          {stale ? "This code may have expired — " : "Wrong email? "}
+          {onRestart ? (
+            <button
+              type="button"
+              onClick={onRestart}
+              className="font-medium text-primary hover:underline"
+            >
+              Start over
+            </button>
+          ) : (
+            <Link
+              href="/register"
+              className="font-medium text-primary hover:underline"
+            >
+              Start over
+            </Link>
+          )}
+        </div>
       </div>
     </AuthCard>
   )
