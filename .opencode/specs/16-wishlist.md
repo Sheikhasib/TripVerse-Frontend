@@ -2,9 +2,8 @@
 
 ## Status
 
-**NEW.** Promoted out of `12-explicitly-cut.md`. The backend ships the `wishlist` module
-(server Step ~19): save/list/remove packages for a USER, idempotent, no "clear all". The client
-has no wishlist API, no heart button, and no page.
+**DONE.** Promoted out of `12-explicitly-cut.md`. The backend ships the `wishlist` module
+(server Step ~19): save/list/remove packages for a USER, idempotent, no "clear all".
 
 ## Overview
 
@@ -48,7 +47,9 @@ GET /api/wishlist?page=1&limit=10            auth(USER)
    location, price Number, duration, images, rating, category, agent)
 
 DELETE /api/wishlist/:packageId              auth(USER)
-  → 200 { data: null }   (idempotent — removing a non-saved package is a no-op, never an error)
+  → 204 No Content, empty body   (idempotent — removing a non-saved package is a no-op,
+                                   never an error; the client's request() maps any 204 to a
+                                   synthetic success envelope before JSON parsing)
 ```
 
 ## New API functions (`lib/api/wishlist.ts`)
@@ -176,3 +177,22 @@ Runnable via `npm run dev` with the server running the wishlist module:
   pagination works past 50 items; error state surfaces the `ApiError` message with a retry.
 - The public `/packages` grid is visually unchanged (card default rendering untouched).
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+
+## As built (implementation notes)
+
+- **DELETE is `204 No Content`**, not the `200 { data: null }` first written above (the only
+  204 endpoint on the server — every other DELETE answers 200-with-body). `request()` in
+  `lib/api/client.ts` short-circuits any 204 into a synthetic success envelope; without it a
+  successful remove threw a false "Request failed with status 204".
+- **Naming follows repo convention, not this spec's first draft:** hooks live in
+  `hooks/use-wishlist.ts` (kebab-case like `use-me.ts`), and pagination reuses the existing
+  shared `Pagination { page, totalPages, onPageChange }` (`PaginationPages` doesn't exist).
+- Heart placement: right of the package title on the detail page; on cards, the filled-heart
+  remove control is a **sibling of the image `<Link>`** on the outer relative container —
+  nesting it inside the anchor would create nested interactive elements.
+- No optimistic updates (optional per spec) — mutation `onSuccess` invalidates both
+  `["wishlist"]` and `["wishlist-saved"]` prefixes and the refetch keeps every heart in sync.
+- Verified live against :4000 with a demo USER session: save → 201; duplicate save → same row
+  id/createdAt (idempotent); list embeds the public package with numeric price; delete → 204;
+  repeat delete → 204 no-op; bogus packageId → 404 "Package not found." verbatim; anonymous →
+  401; admin REJECT of a saved package filters it from the list until restored to APPROVED.
