@@ -24,7 +24,10 @@ export const useNotifications = ({
   unread,
 }: { page?: number; limit?: number; unread?: boolean } = {}) =>
   useQuery({
-    queryKey: ["notifications", page, unread ?? "all"],
+    // limit is part of the key: the bell (10) and the /notifications page
+    // (20) can be co-mounted on page 1 with identical other segments —
+    // without it, whichever fetches first owns one cache entry for both.
+    queryKey: ["notifications", page, unread ?? "all", limit],
     queryFn: () => notificationsApi.getMyNotifications({ page, limit, unread }),
     placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,

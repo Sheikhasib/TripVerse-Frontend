@@ -234,6 +234,13 @@ Runnable via `npm run dev` with the server running the notification module and s
 - Mobile treatment: Radix dropdowns misbehave inside the navbar Sheet, so mobile gets a
   compact "Notifications" link in the sheet nav; desktop gets the full bell dropdown beside
   the theme toggle; dashboards render the same bell beside `DashboardUserMenu`.
+- **Naming follows repo convention, not this spec's first draft:** hooks live in
+  `hooks/use-notifications.ts` (kebab-case like `use-me.ts`), and pagination reuses the
+  shared `Pagination` component (`PaginationPages` doesn't exist).
+- **List query keys include `limit`.** The bell (10 newest) and the `/notifications` page
+  (20 per page) co-mount under the publicGroup Navbar and would otherwise share one cache
+  entry for key `["notifications", 1, "all"]` — whichever fetched first fed both surfaces
+  mismatched rows/pagination until staleTime expired.
 - Verified live against :4000: USER books → AGENT unread 24→25 with BOOKING_CREATED +
   `/dashboard/agent/bookings/:id`; ADMIN confirms → USER notified (BOOKING_CONFIRMED +
   `/dashboard/bookings/:id`); foreign-id mark-read → 404 "Notification not found." verbatim;
