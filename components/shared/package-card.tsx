@@ -3,22 +3,56 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Clock, MapPin, Star, Compass } from "@phosphor-icons/react"
+import { Clock, MapPin, Star, Compass, Heart, Spinner } from "@phosphor-icons/react"
+import { toast } from "sonner"
 import type { TPublicPackage } from "@/lib/api/packages"
+import { ApiError } from "@/lib/api/client"
+import { useRemoveFromWishlist } from "@/hooks/use-wishlist"
 import { formatBDT } from "@/lib/format"
 
 interface PackageCardProps {
   pkg: TPublicPackage
   rating?: number
   reviewCount?: number
+  // Wishlist variant: overlays a filled-heart control that removes the
+  // package from the wishlist. Default rendering stays untouched.
+  wishlist?: boolean
 }
 
-export function PackageCard({ pkg, rating, reviewCount }: PackageCardProps) {
+export function PackageCard({ pkg, rating, reviewCount, wishlist }: PackageCardProps) {
   const [imgError, setImgError] = useState(false)
   const imageUrl = pkg.images?.[0]
+  const removeFromWishlist = useRemoveFromWishlist()
+
+  const handleRemove = async () => {
+    try {
+      await removeFromWishlist.mutateAsync(pkg.id)
+      toast.success("Removed from your wishlist.")
+    } catch (error) {
+      toast.error(
+        error instanceof ApiError ? error.message : "Something went wrong.",
+      )
+    }
+  }
 
   return (
-    <div className="group/card flex flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
+    <div className="group/card relative flex flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
+      {wishlist && (
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={removeFromWishlist.isPending}
+          aria-label="Remove from wishlist"
+          title="Remove from wishlist"
+          className="absolute right-2 top-2 z-10 inline-flex cursor-pointer items-center justify-center rounded-full bg-background/85 p-2 text-primary backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-background active:scale-95 disabled:pointer-events-none disabled:opacity-60"
+        >
+          {removeFromWishlist.isPending ? (
+            <Spinner size={16} className="animate-spin" />
+          ) : (
+            <Heart size={16} weight="fill" />
+          )}
+        </button>
+      )}
       <Link href={`/packages/${pkg.slug}`} className="block">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {imageUrl && !imgError ? (

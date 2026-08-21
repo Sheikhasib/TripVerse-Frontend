@@ -5,6 +5,7 @@ import {
   CreditCard,
   Gauge,
   GearSix,
+  Heart,
   Newspaper,
   Package,
   Plus,
@@ -29,6 +30,7 @@ export const NAV_SECTIONS_BY_ROLE: Record<TRole, NavSection[]> = {
     {
       title: "Trips",
       items: [
+        { label: "Wishlist", href: "/user-dashboard/wishlist", icon: Heart },
         { label: "My Bookings", href: "/user-dashboard/bookings", icon: Receipt },
         { label: "Payments", href: "/user-dashboard/payments", icon: CreditCard },
       ],

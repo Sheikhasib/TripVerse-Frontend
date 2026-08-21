@@ -6,6 +6,7 @@ import { PackageImageGallery } from "./_components/package-image-gallery"
 import { BookingPanel } from "./_components/booking-panel"
 import { PackageCard } from "@/components/shared/package-card"
 import { Rating } from "@/components/shared/rating"
+import { WishlistButton } from "@/components/wishlist/wishlist-button"
 import { ArrowRight, MapPin } from "@phosphor-icons/react/dist/ssr"
 import { GoBack } from "@/components/shared/go-back"
 import type { TPublicPackage } from "@/lib/api/packages"
@@ -87,9 +88,12 @@ export default async function PackageDetailPage({ params }: PageProps) {
               </span>
             </div>
 
-            <h1 className="font-display text-3xl font-medium tracking-tight leading-tight sm:text-4xl">
-              {pkg.title}
-            </h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="font-display text-3xl font-medium tracking-tight leading-tight sm:text-4xl">
+                {pkg.title}
+              </h1>
+              <WishlistButton packageId={pkg.id} className="shrink-0" />
+            </div>
 
             {typeof pkg.rating === "number" && pkg.rating > 0 && (
               <div className="flex items-center gap-2 text-sm">
