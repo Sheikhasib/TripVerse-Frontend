@@ -96,12 +96,13 @@ const ROLE_DASHBOARD: Record<string, string> = {
   ADMIN: "/admin-dashboard",
 }
 
-// Authenticated-only routes (dashboards + profile). Any other non-public
-// path is an unknown route and should show the styled not-found page.
+// Authenticated-only routes (dashboards + profile + notifications). Any other
+// non-public path is an unknown route and should show the styled not-found page.
 const PROTECTED_PREFIXES = [
   "/user-dashboard",
   "/agent-dashboard",
   "/admin-dashboard",
+  "/notifications",
   "/profile",
 ]
 
