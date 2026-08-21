@@ -208,8 +208,10 @@ export async function proxy(request: NextRequest) {
       } else {
         // The server issued a fresh token (so the refresh token is valid), but
         // this middleware cannot verify it. JWT_ACCESS_SECRET here does not
-        // match the server's signing secret — the user would loop back to
-        // login on every protected navigation. Log loudly, don't clear cookies.
+        // match the server's signing secret. No refreshedPair is attached and
+        // refreshFailedTransiently stays false, so the stale cookies are
+        // cleared below — a clean logout that ends the otherwise doomed loop
+        // of refreshing into tokens this proxy can never verify.
         console.error(
           "[auth] refresh succeeded but token verification failed — JWT_ACCESS_SECRET/JWT_REFRESH_SECRET do NOT match the server. Align them in Vercel env.",
         )

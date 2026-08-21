@@ -52,11 +52,19 @@ const getNewAccessToken = async (
     return { status: "invalid" }
   }
 
+  // Under rotation a 200 always carries BOTH tokens. A success that omits the
+  // new refresh token must not fall back to the presented one — that token may
+  // already be revoked, and persisting it would self-inflict a reuse-detection
+  // family nuke on the next refresh. Bail out as transient instead.
+  if (!envelope.data.refreshToken) {
+    return { status: "error" }
+  }
+
   return {
     status: "ok",
     tokenPair: {
       accessToken: envelope.data.accessToken,
-      refreshToken: envelope.data.refreshToken ?? refreshToken,
+      refreshToken: envelope.data.refreshToken,
     },
   }
 }

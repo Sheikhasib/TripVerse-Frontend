@@ -42,6 +42,8 @@ POST /api/auth/refresh   auth-adjacent (httpOnly cookie OR body { refreshToken }
        the whole family is revoked (tokenVersion++) — every session dies, not just this one.
     401 "Invalid refresh token. Please login again."          ← never issued / pruned
     401 "Refresh token has expired. Please login again."
+       ← near-unreachable: an expired JWT fails verifyToken first with the raw jwt error;
+       this curated message only fires on app↔DB clock skew (JWT exp vs ledger expiresAt)
     401 "Token is no longer valid. Please login again."       ← tokenVersion changed (logout
        / password reset); the presented token is now stale
     403 "Account has been deleted" · 403 "Account is suspended"
@@ -91,9 +93,12 @@ best-effort coverage (the same limitation as any in-memory dedupe).
 
 ## Files changed
 
-- `proxy.ts` — in-flight dedupe + rotation grace cache (as built, ~50 lines incl. comments)
-- `service/refreshToken.ts` — unchanged; the `invalid`/`error` mapping was re-confirmed
-  against the rotation failure modes during verification
+- `proxy.ts` — in-flight dedupe + rotation grace cache (as built, ~50 lines incl. comments);
+  also corrected the stale secret-mismatch comment — cookies ARE cleared on that path
+  (a clean logout ending the doomed verify loop), not kept
+- `service/refreshToken.ts` — hardened: a 200 that omits the rotated refresh token now maps
+  to `"error"` instead of falling back to the presented (possibly already-revoked) token,
+  which would self-inflict a reuse-detection family nuke on the next refresh
 - `.opencode/specs/15-refresh-token-rotation.md` — this file
 
 ## New dependencies
