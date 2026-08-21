@@ -26,6 +26,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import {
+  Bell,
   Compass,
   Gauge,
   List,
@@ -43,6 +44,7 @@ import { toast } from "sonner"
 import { authApi } from "@/lib/api/auth"
 import { roleDashboard } from "@/utils/role"
 import { useMe } from "@/hooks/use-me"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import type { TRole } from "@/lib/validations/auth"
 
 const navItems = [
@@ -145,6 +147,10 @@ export function Navbar() {
         </form>
 
         <div className="flex items-center gap-2">
+          <div className="hidden md:block">
+            <NotificationBell />
+          </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -309,16 +315,28 @@ export function Navbar() {
                   </li>
                 ))}
                 {isLoggedIn && (
-                  <li>
-                    <Link
-                      href={roleDashboard(user!.role)}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <Gauge />
-                      {roleLabel[user!.role]}
-                    </Link>
-                  </li>
+                  <>
+                    <li>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        <Bell />
+                        Notifications
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href={roleDashboard(user!.role)}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                      >
+                        <Gauge />
+                        {roleLabel[user!.role]}
+                      </Link>
+                    </li>
+                  </>
                 )}
               </ul>
             </nav>

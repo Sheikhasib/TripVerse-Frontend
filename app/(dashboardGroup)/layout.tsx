@@ -6,6 +6,7 @@ import { Compass, List } from "@phosphor-icons/react"
 import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { DashboardUserMenu } from "@/components/dashboard/dashboard-user-menu"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import {
   DashboardSidebar,
   DashboardMobileNav,
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <DashboardUserMenu />
           </div>
         </div>
