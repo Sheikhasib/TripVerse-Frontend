@@ -2,13 +2,14 @@
 
 ## Status
 
-**VERIFY + HARDEN.** Backend auth was hardened (server Step 22): every refresh now **rotates**
+**DONE.** Backend auth was hardened (server Step 22): every refresh now **rotates**
 the refresh token (the presented token is revoked in a DB ledger and a fresh pair is issued), and
 reusing a revoked token — the theft signature — **nukes the whole token family** via a
 `tokenVersion` bump. `logout` and `reset-password` also bump `tokenVersion`, so all outstanding
-sessions die at once. The client's `service/refreshToken.ts` + `proxy.ts` were built before this
-change; this step verifies they still behave correctly under rotation, documents the contract,
-and adds one small hardening for the concurrency edge rotation introduces.
+sessions die at once. This step added two module-scoped guards in `proxy.ts` (in-flight refresh
+dedupe + a short-TTL rotation grace cache) and verified the full lifecycle end-to-end against
+`next start` plus the running backend: rotation, concurrent dedupe, tombstone replay,
+family-alive, genuine-reuse nuke, logout kill, reset-password kill.
 
 ## Overview
 
@@ -52,32 +53,33 @@ POST /api/auth/reset-password (Step 14) → tokenVersion++ (family nuke)
 Ledger housekeeping runs opportunistically on refresh (expired rows + rows revoked > 7 days are
 pruned), so the table never grows unbounded without a cron.
 
-## Client changes
+## Client changes (as built)
 
-**`proxy.ts` — add a module-scoped in-flight dedupe for refreshes.** Two middleware invocations
-sharing one still-valid refresh token must not present it twice. Key a short-lived in-flight
-map by the refresh token value (or its hash) and reuse the same pending promise:
+**`proxy.ts` — two module-scoped guards protect the single-use refresh token:**
 
-```
-const inFlightRefresh = new Map<string, Promise<TRefreshResult>>()
+1. **In-flight dedupe** — `Map<string, Promise<TRefreshResult>>` keyed by the presented
+   refresh token. Concurrent invocations share one pending `getNewAccessToken` promise; the
+   entry is deleted once it settles. All callers resolve to the identical rotated pair, so
+   parallel server-rendered requests perform exactly one rotation.
+2. **Rotation grace cache** — `Map<string, { pair, expiresAt }>` (old token → rotated pair,
+   `REFRESH_GRACE_MS = 10_000`), written by whichever caller performed the real backend call,
+   on success. A request landing after a rotation settled but before the browser applied the
+   new cookie would otherwise present the just-revoked token and trip reuse detection; the
+   cache serves it instead. Expired entries are swept opportunistically on insert.
 
-if (!auth && refreshToken) {
-  const existing = inFlightRefresh.get(refreshToken)
-  const pending = existing ?? getNewAccessToken(refreshToken)
-  if (!existing) inFlightRefresh.set(refreshToken, pending)
-  const result = await pending
-  inFlightRefresh.delete(refreshToken)   // runs for the winner; losers resolve the same promise
-  ...
-}
-```
+Refresh-branch lookup order: in-flight pending → unexpired grace entry → live
+`getNewAccessToken` call. A cache hit is verified locally like any fresh pair and attached as
+`refreshedPair`, so cookies are re-set idempotently. A reuse-detection 401 that genuinely
+reaches the client (a replay after the grace window — the theft signature) still clears
+cookies via the existing `clearStaleCookies` path and sends the user to login — intended.
 
-Concurrent invocations with the same token then perform a single rotation; the losers receive
-the same fresh pair. This preserves rotation's security (each token still used once) while
-removing the self-inflicted logout. A reuse-detection 401 that genuinely reaches the client
-(e.g. a real stolen token replay) still clears cookies via the existing `clearStaleCookies`
-path and sends the user to login — correct behaviour.
+**Per-process caveat (verified during this step):** these caches live in module scope, so
+they work reliably under `next start`, where the middleware module stays alive. `next dev`
+recycles the middleware sandbox between non-overlapping requests — sequential-request testing
+of the grace cache only behaves against a production build. Multi-instance deployments get
+best-effort coverage (the same limitation as any in-memory dedupe).
 
-**No other code changes are expected.** The remaining surfaces already conform:
+**No other code changes were needed.** The remaining surfaces already conform:
 - `service/refreshToken.ts` `getNewAccessToken` sends the refresh token in the body and reads
   the rotated pair from `envelope.data`; it treats 5xx as transient (`status: "error"`, cookies
   kept) and every 4xx as definitive (`status: "invalid"`, cookies cleared). This maps exactly to
@@ -87,11 +89,11 @@ path and sends the user to login — correct behaviour.
 - `useMe` swallows a `/api/auth/me` 401 → `null` → navbar renders logged-out; a family nuke
   surfaces as a graceful session end, not a crash.
 
-## Files to change
+## Files changed
 
-- `proxy.ts` — in-flight refresh dedupe (small; ~8 lines)
-- `service/refreshToken.ts` — no change expected; re-read and confirm the `invalid`/`error`
-  mapping in the DoD verification
+- `proxy.ts` — in-flight dedupe + rotation grace cache (as built, ~50 lines incl. comments)
+- `service/refreshToken.ts` — unchanged; the `invalid`/`error` mapping was re-confirmed
+  against the rotation failure modes during verification
 - `.opencode/specs/15-refresh-token-rotation.md` — this file
 
 ## New dependencies
@@ -112,21 +114,29 @@ No new dependencies.
 - A reuse-detection logout is **intended** behaviour (stolen-token response). The dedupe only
   removes *self-inflicted* reuse from concurrent same-flight refreshes.
 
-## Definition of done
+## Definition of done — verified
 
-Runnable via `npm run dev` with the server running the Step 22 auth module:
+Verified via raw HTTP against `npm run start` (production build; see per-process caveat) with
+the server running the Step 22 auth module:
 
-- Login → wait for the access token to expire (or shorten `JWT_ACCESS_EXPIRES_IN` locally) →
-  navigate → the browser now holds a **new** refresh cookie; the old refresh token fails with
-  "Invalid refresh token. Please login again." if replayed manually.
-- **Concurrency:** load a page that triggers the proxy with a just-expired access token twice
-  in the same instant (e.g. two simultaneous navigations) → the user stays logged in (dedupe
-  collapses the two refreshes into one rotation). Without the dedupe this step previously
-  logged the user out.
-- Log out → the refresh token is dead (`/api/auth/me` and refresh both 401); the user lands on
-  `/login` and the cookies are cleared.
-- Reset the password in another tab (Step 14) → this tab's next navigation bounces to `/login`
-  (tokenVersion bump killed the session).
-- A backend restart with a cleared DB drops the ledger rows → refresh returns "Invalid refresh
-  token" → clean logout, no crash, no spinner loop.
-- `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+- ✅ Rotation happy path: navigating with only a valid refresh cookie returns 200 and the
+  response carries a **new** rotated pair; the session survives.
+- ✅ Concurrency: two simultaneous navigations presenting the same still-valid refresh token
+  both return 200 with the **identical** rotated pair (dedupe collapsed them into one
+  rotation).
+- ✅ Grace cache: an immediate replay of the just-rotated token is served the cached pair (no
+  backend hit) and the family stays alive — the next navigation rotates normally.
+- ✅ Genuine replay after the grace window: 307 to `/login?redirectTo=…` with all cookies
+  cleared. Correction to the original wording: a rotated token replayed past the grace window
+  trips **reuse detection** ("Refresh token reuse detected. Please login again." + family
+  nuke), not "Invalid refresh token" — that message is reserved for never-issued/pruned
+  tokens. Because the server checks `tokenVersion` before the ledger, every other token of
+  the nuked family then fails with "Token is no longer valid. Please login again." (verified
+  directly against the backend).
+- ✅ Log out → the refresh token is dead (`/api/auth/me` and refresh both 401); the next proxy
+  navigation lands on `/login` with the cookies cleared.
+- ✅ Reset the password (Step 14 flow, throwaway user) → the pre-reset session's next
+  navigation bounces to `/login` (tokenVersion bump killed it).
+- ✅ A backend DB without the ledger row (never-issued token) → "Invalid refresh token" →
+  clean logout, no crash, no spinner loop (covered by the `invalid` mapping).
+- ✅ `npm run lint` and `npm run typecheck` pass. Committed + pushed (AGENTS.md workflow).
