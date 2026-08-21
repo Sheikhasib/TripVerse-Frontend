@@ -98,10 +98,14 @@ POST /api/auth/reset-password { email, otp, newPassword }        public (authCre
   Errors (verbatim): 400 "Invalid or expired OTP." · 400 "New password ..." validation.
   Side effects: replaces the password hash, increments tokenVersion (kills every session),
   deletes the OTP, emails a reset-success notice. Does NOT log in.
-  Known server asymmetry (benign): eligibility here checks deleted / SUSPENDED / GOOGLE but
-  not `emailVerified: false`, unlike forgot-password. Unreachable through normal flows —
-  credential accounts only exist after verify — but worth aligning if seeds/admin tooling
-  ever create unverified credential accounts.
+  Known server asymmetry (cosmetic, audited): eligibility here checks deleted / SUSPENDED /
+  GOOGLE but not `emailVerified: false`, unlike forgot-password. Audited every user.create
+  site — verify-email, Google login, seed, test factory; no admin creation route exists — so
+  production can never hold an unverified credential account. Even a forced one behaves
+  identically: forgot mints no OTP, so reset falls through to the Redis lookup and throws the
+  same "Invalid or expired OTP." a pre-check would. Key namespaces are disjoint
+  (`register-otp:` vs `forgot-password-otp:`), so no cross-flow OTP reuse. Optional one-line
+  symmetry fix (`!isUserExists.emailVerified` in reset's pre-check); left as-is deliberately.
 ```
 
 All five are **public**; the 429 body is `{ success: false, message: "Too many attempts.
@@ -160,8 +164,17 @@ resetPasswordSchema  = { email, otp: otpSchema, newPassword: z.string().min(6).m
   **without navigating away** — a mid-flow refresh survives because phase 2 re-derives both
   from `?email=&sentAt=` (set via `router.replace("/register?email=…&sentAt=…")`). A server
   409 "Registration is pending verification…" toasts verbatim **and** auto-jumps to phase 2,
-  since the staged account makes re-registering pointless. Keep the "already have an
-  account?" footer on both phases.
+  since the staged account makes re-registering pointless. The jump seeds a fresh 60 s
+  countdown (`sentAtNow()`) regardless of when the original OTP went out — display-only
+  optimism; the server limiter and the 5-minute staging TTL stay authoritative.
+  409 discrimination is load-bearing — do not "fix" to status-matching: the client
+  discriminates via `error.message.includes("pending verification")`, not
+  `statusCode === 409`, because register has two distinct 409s ("User with this email
+  already exists" vs "Registration is pending verification…") and the response envelope
+  carries no error-code field. Status-matching alone would push taken-email users into a
+  dead-end OTP step where resend no-ops forever (no staging key exists). Message matching
+  is the only discriminator available. Keep the "already have an account?" footer on both
+  phases.
 - `components/auth/login-form.tsx` — add a "Forgot password?" link under the submit button to
   `/forgot-password` (small, non-intrusive).
 - `proxy.ts` — add `"/verify-email"`, `"/forgot-password"`, `"/reset-password"` to
