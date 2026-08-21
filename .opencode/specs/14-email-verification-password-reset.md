@@ -2,13 +2,14 @@
 
 ## Status
 
-**NEW.** The backend's auth module (server Step 21) changed registration fundamentally:
+**DONE.** The backend's auth module (server Step 21) changed registration fundamentally:
 `POST /api/auth/register` no longer creates a user row. It stages the payload in Redis,
 emails a 6-digit OTP, and the account is only materialised by
 `POST /api/auth/verify-email` (which also auto-logs-in). Password recovery is OTP-based too
-(`forgot-password` → email OTP → `reset-password`). The current client register form routes
-straight to `/login` on success — it must now transition to an OTP verification step, and the
-client is missing the verify/resend/forgot/reset API functions and pages entirely.
+(`forgot-password` → email OTP → `reset-password`). This step implemented the whole client
+surface — two-phase register, verify/resend card, forgot/reset flows, proxy whitelist
+entries, and the `?sentAt=` countdown-seeding mechanism — and was verified end-to-end
+against the running server (see Definition of done).
 
 ## Overview
 
@@ -31,14 +32,14 @@ on `login`, `register`, `reset-password`; `authOtpLimiter` (10 requests / 15 min
 endpoints in this step, `reset-password` sits on the credential pool and the other four on the
 OTP pool. The client must surface the 429 verbatim and never auto-fire resend in a loop.
 
-**Mismatches fixed by this step (today):**
-- `lib/api/auth.ts` — `register` declares `apiClient<TAuthUser>` but the server now returns
-  `data: null`; there are no `verifyEmail`/`resendVerification`/`forgotPassword`/`resetPassword`
+**Mismatches this step fixed (as found before implementation):**
+- `lib/api/auth.ts` — `register` declared `apiClient<TAuthUser>` while the server returns
+  `data: null`; there were no `verifyEmail`/`resendVerification`/`forgotPassword`/`resetPassword`
   functions at all.
-- `components/auth/register-form.tsx` — toast "Account created. Please log in." + redirect to
-  `/login` is now false; the account does not exist until the OTP is verified.
-- `proxy.ts` — `/verify-email`, `/forgot-password`, `/reset-password` are absent from
-  `PUBLIC_EXACT_PATHS`, so an unauthenticated visitor would be bounced.
+- `components/auth/register-form.tsx` — toasted "Account created. Please log in." + redirected
+  to `/login`, false now that the account does not exist until the OTP is verified.
+- `proxy.ts` — `/verify-email`, `/forgot-password`, `/reset-password` were absent from
+  `PUBLIC_EXACT_PATHS`, so an unauthenticated visitor would have been bounced.
 
 ## Depends on
 
@@ -47,7 +48,7 @@ OTP pool. The client must surface the 429 verbatim and never auto-fire resend in
 - `components/auth/use-after-auth.ts` — `useAfterAuth(accessToken, role, message)`; reused by
   the verify step for the auto-login redirect (it also persists the `accessTokenClient` cookie).
 - `utils/token.ts` — `decodeJwtPayload` (already used by the login form to read `role`).
-- `components/auth/auth-card.tsx` — the shared auth shell for the two new public pages.
+- `components/auth/auth-card.tsx` — the shared auth shell for the three new public pages.
 - `proxy.ts` (Step 4) — must add the three new public paths.
 - Server: `auth` module (Step 21) — `POST /api/auth/verify-email`, `/resend-verification`,
   `/forgot-password`, `/reset-password`; `authCredentialLimiter` / `authOtpLimiter` in `app.ts`.
@@ -64,7 +65,7 @@ OTP pool. The client must surface the 429 verbatim and never auto-fire resend in
 
 All four render inside `(authGroup)` with the existing `AuthCard`. `/register` keeps a single
 route but manages two internal steps so a mid-flow refresh doesn't lose the email (phase 2
-re-derives `email` from the submitted value and survives refresh by reading `?email=`).
+re-derives `email`/`sentAt` and survives refresh by reading `?email=&sentAt=`).
 
 ## Server contract (actual, Step 21)
 
@@ -97,6 +98,10 @@ POST /api/auth/reset-password { email, otp, newPassword }        public (authCre
   Errors (verbatim): 400 "Invalid or expired OTP." · 400 "New password ..." validation.
   Side effects: replaces the password hash, increments tokenVersion (kills every session),
   deletes the OTP, emails a reset-success notice. Does NOT log in.
+  Known server asymmetry (benign): eligibility here checks deleted / SUSPENDED / GOOGLE but
+  not `emailVerified: false`, unlike forgot-password. Unreachable through normal flows —
+  credential accounts only exist after verify — but worth aligning if seeds/admin tooling
+  ever create unverified credential accounts.
 ```
 
 All five are **public**; the 429 body is `{ success: false, message: "Too many attempts.
@@ -126,26 +131,37 @@ resetPasswordSchema  = { email, otp: otpSchema, newPassword: z.string().min(6).m
 
 ## Components
 
-**Create (`components/auth/`):**
+**Create (`components/auth/` + `hooks/` + `utils/`):**
 - `otp-input.tsx` — a 6-digit single-field input (`inputMode="numeric"`, `maxLength=6`,
   `autoComplete="one-time-code"`); used by both the verify step and reset. No split-box
-  over-engineering — one controlled field with a digit pattern.
-- `verify-email-card.tsx` — props `{ email: string }`. Reads OTP, calls `verifyEmail`, on
-  success `useAfterAuth(data.accessToken, decodeJwtPayload(...).role, "Email verified —
-  welcome to TripVerse")`. Shows a **Resend** link (disabled 60 s countdown; then
-  `resendVerification`). Surfaces 400/409/503/429 verbatim. `AuthCard` shell + sonner toasts.
+  over-engineering — one controlled field with a digit pattern; change values are sanitized
+  to digits (`value.replace(/\D/g, "")`).
+- `verify-email-card.tsx` — props `{ email: string, sentAt?: number }`. Reads OTP, calls
+  `verifyEmail`, on success `useAfterAuth(data.accessToken, decodeJwtPayload(...).role,
+  "Email verified — welcome to TripVerse")`. Shows a **Resend** link (countdown via
+  `useOtpResend`, announced with `aria-live="polite"`; then `resendVerification`). Surfaces
+  400/409/503/429 verbatim. `AuthCard` shell + sonner toasts.
 - `forgot-password-form.tsx` — email form → `forgotPassword` → always the uniform-success
   info card ("If an account with that email exists…") with a button to
-  `/reset-password?email=<encoded>`; link back to `/login`.
-- `reset-password-form.tsx` — props `{ email: string }`. OTP + new password + confirm.
-  `resetPassword` → toast "Password reset — please log in with your new password" →
+  `/reset-password?email=<encoded>&sentAt=<epoch ms>`, a "Try a different email" button that
+  returns to the form (resubmit affordance), and a link back to `/login`.
+- `reset-password-form.tsx` — props `{ email: string, sentAt?: number }`. OTP + new password +
+  confirm. `resetPassword` → toast "Password reset — please log in with your new password" →
   `router.replace("/login")`. Resend link (countdown) calls `forgotPassword(email)` again.
+- `hooks/use-otp-resend.ts` — shared resend UX for both OTP cards: seeds the first countdown
+  from `sentAt` (see below), fresh 60 s on resend success (also refreshing `?sentAt=` in the
+  URL), verbatim error surfacing, no auto-resend.
+- `utils/sent-at.ts` — `parseSentAt(raw)` (query-param → epoch ms or undefined) and
+  `sentAtNow()` (module-level `Date.now` wrapper; see purity note below).
 
 **Modify:**
-- `register-form.tsx` — two-phase. Phase 1 (current form): on success store `email` and switch
-  to phase 2 (OTP) rendered by `verify-email-card` **without navigating away** — a mid-flow
-  refresh survives because phase 2 also reads `?email=` (set via `router.replace("/register?email=…")`).
-  Keep the "already have an account?" footer on both phases.
+- `register-form.tsx` — two-phase. Phase 1 (current form): on success store `email` +
+  `sentAt` (`advanceToOtp`) and switch to phase 2 (OTP) rendered by `verify-email-card`
+  **without navigating away** — a mid-flow refresh survives because phase 2 re-derives both
+  from `?email=&sentAt=` (set via `router.replace("/register?email=…&sentAt=…")`). A server
+  409 "Registration is pending verification…" toasts verbatim **and** auto-jumps to phase 2,
+  since the staged account makes re-registering pointless. Keep the "already have an
+  account?" footer on both phases.
 - `components/auth/login-form.tsx` — add a "Forgot password?" link under the submit button to
   `/forgot-password` (small, non-intrusive).
 - `proxy.ts` — add `"/verify-email"`, `"/forgot-password"`, `"/reset-password"` to
@@ -165,12 +181,28 @@ None. Existing `apiClient`, TanStack Query (not needed — these are form-submit
 - Every error path surfaces `ApiError.message` verbatim (400/409/429/503).
 
 ### Rate-limit & resend UX
-- Resend buttons are **always** disabled for a 60 s countdown after the first send.
+- Resend buttons start a 60 s countdown after the first send — seeded down from `sentAt` when
+  the URL carries one, so a late arrival isn't locked out for the full minute.
 - Never auto-resend on interval — only on user click. A 429 toast tells the user to wait 15 min.
 
+### Resend countdown seeding (`?sentAt=`)
+- Transitions into an OTP step append `&sentAt=<epoch ms>`: register phase 1 → phase 2, and
+  forgot-password's success card → `/reset-password`. Pages parse it with `parseSentAt` and
+  pass it to the card; missing/invalid values fall back to a fresh 60 s countdown.
+- `useOtpResend(resendAction, email, successMessage, sentAt?)` seeds the first countdown from
+  time already elapsed (`max(0, 60 − elapsed)`). On resend success it restarts at 60 s **and**
+  refreshes `?sentAt=` via `router.replace(..., { scroll: false })`, so reloading mid-countdown
+  seeds from the latest send rather than the original one.
+- `react-hooks/purity` flags `Date.now()` anywhere inside a component body (event handlers
+  included), so event-time stamps go through the module-level `sentAtNow()` wrapper instead.
+
 ### SSR & routing
-- All three pages are `"use client"`. `email` travels via `?email=` (encodeURIComponent) so a
-  refresh never loses it; there is no localStorage or session storage anywhere.
+- The three new pages are async server components: they `await searchParams`, `redirect()` to
+  the sensible upstream route when `email` is missing (`/register` for verify-email,
+  `/forgot-password` for reset-password), and wrap the client card in `<Suspense>`. Only the
+  cards/forms are `"use client"`.
+- `email` (+ `sentAt`) travel via the query string (encodeURIComponent) so a refresh never
+  loses them; there is no localStorage or session storage anywhere.
 - `/verify-email`, `/forgot-password`, `/reset-password` are public (proxy whitelist) but
   render inside `(authGroup)`. `proxy.ts`'s auth-route redirect (step 1 in the middleware)
   already sends logged-in users to their dashboard, so these paths must be in
@@ -185,16 +217,18 @@ None. Existing `apiClient`, TanStack Query (not needed — these are form-submit
 ## Definition of done
 
 Runnable via `npm run dev` with the server running the Step 21 auth module, Redis up, and
-Nodemailer pointing at a mail catcher (Mailpit/ethereal):
+Nodemailer delivering (Mailpit/ethereal mail catcher, or the Gmail SMTP creds in the server
+`.env` — OTPs can also be read straight from the Redis keys for automated checks):
 
 - Registering a new email shows "Verification OTP sent to your email" and the OTP step; **no
   user row exists** before verify (check via server/DB).
 - Typing the OTP from the mail catcher verifies, auto-logs-in (lands on the USER dashboard),
   and the account exists with `emailVerified: true`.
-- Wrong OTP → "Invalid or expired OTP." verbatim; the email can be resent after the 60 s
-  countdown.
+- Wrong OTP → "Invalid or expired OTP." verbatim; the email can be resent after the countdown.
 - Resubmitting the same register form mid-flow → the server's 409 "Registration is pending
-  verification…" surfaces verbatim.
+  verification…" surfaces verbatim as a toast **and** auto-jumps to the OTP step (phase 2).
+- Reloading `/verify-email` or `/reset-password` mid-countdown resumes the remaining seconds
+  from `?sentAt=` instead of restarting at 60; after a resend the URL's `sentAt` is refreshed.
 - `/forgot-password` always shows the uniform success message (test with an unknown email too).
 - `/reset-password?email=` with the emailed OTP + new password succeeds; the user is taken to
   `/login`; the old password no longer works and all prior sessions are killed (open a second
