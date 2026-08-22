@@ -240,9 +240,12 @@ export function CommentSection({ slug }: { slug: string }) {
       <CommentForm
         slug={slug}
         placeholder="Share your thoughts on this story..."
-        onSubmitSuccess={() =>
+        onSubmitSuccess={() => {
+          // Newest-first list: jump back to page 1 so the fresh comment is
+          // visible immediately instead of hiding behind pagination.
+          setPage(1)
           queryClient.invalidateQueries({ queryKey: ["blog-comments", slug] })
-        }
+        }}
       />
 
       {isLoading ? (
