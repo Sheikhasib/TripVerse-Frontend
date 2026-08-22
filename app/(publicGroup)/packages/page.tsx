@@ -1,5 +1,6 @@
 import { packagesApi } from "@/lib/api/packages"
 import { parsePackageQuery } from "@/lib/api/queryParams"
+import { GoBack } from "@/components/shared/go-back"
 import { PackagesContent } from "./_components/packages-content"
 import type { TPublicPackageQuery } from "@/lib/api/packages"
 
@@ -50,6 +51,8 @@ export default async function PackagesPage({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <GoBack href="/" className="mb-6" />
+
       <div className="mb-10">
         <h1 className="font-display text-4xl font-medium tracking-tight">
           Browse Packages
