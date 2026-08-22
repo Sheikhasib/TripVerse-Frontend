@@ -2,10 +2,9 @@
 
 ## Status
 
-**NEW.** Promoted out of `12-explicitly-cut.md`. The backend ships blog comments (server
+**DONE.** Promoted out of `12-explicitly-cut.md`. The backend ships blog comments (server
 Step ~24): public threaded comments on published posts with **one-level replies** — top-level
-comments may be replied to, replies may not. Any authenticated user can comment; the author or
-an ADMIN can soft-delete. The blog detail page today renders content with no comment section.
+comments may be replied to, replies may not.
 
 ## Overview
 
@@ -170,3 +169,22 @@ seed post:
 - Pagination works past 10 top-level comments; the empty state ("No comments yet") shows on a
   fresh post.
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+
+## As built (implementation notes)
+
+- **Naming follows repo convention:** the API file is `lib/api/blog-comments.ts` (not
+  `blogComments.ts`), pagination reuses the shared `Pagination` component (no
+  `PaginationPages`), and `formatRelativeTime` is imported from `lib/format.ts` where Step 18
+  relocated it out of `lib/notifications.ts`.
+- **Phosphor has no `Reply` icon** — the reply toggle uses `ArrowBendUpLeft`.
+- The blog detail page stays a server component; `<CommentSection slug={slug} />` is a client
+  island in a bordered card after the content. Queries/mutations are inline (single consumer),
+  keyed `["blog-comments", slug, page]`, invalidated by prefix on create/delete.
+- `tsconfig.json` no longer includes `.next/dev/types/**` — those dev-server-generated files
+  are rewritten while `next dev` runs and intermittently poisoned `npm run typecheck`.
+- Verified live against :4000 on a published seed post: anonymous GET 200 + POST 401; signed-in
+  top-level post appears newest-first; reply nests oldest-first; reply-to-reply → 400 "Replies
+  to replies are not allowed."; bogus parentId → 400 "Parent comment not found on this post.";
+  foreign delete → uniform 404 "Comment not found."; admin delete of someone else's comment →
+  200; comments on a DRAFT slug → 404 "Post not found."; pagination meta correct. Both test
+  comments hard-deleted afterwards; the post's list returned to zero.

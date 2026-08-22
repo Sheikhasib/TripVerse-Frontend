@@ -241,6 +241,9 @@ Runnable via `npm run dev` with the server running the notification module and s
   (20 per page) co-mount under the publicGroup Navbar and would otherwise share one cache
   entry for key `["notifications", 1, "all"]` — whichever fetched first fed both surfaces
   mismatched rows/pagination until staleTime expired.
+- `formatRelativeTime` initially lived in `lib/notifications.ts`; Step 18 relocated it to
+  `lib/format.ts` (its proper home — blog comments reuse it). Only the import in
+  `notification-item.tsx` changed.
 - Verified live against :4000: USER books → AGENT unread 24→25 with BOOKING_CREATED +
   `/dashboard/agent/bookings/:id`; ADMIN confirms → USER notified (BOOKING_CONFIRMED +
   `/dashboard/bookings/:id`); foreign-id mark-read → 404 "Notification not found." verbatim;

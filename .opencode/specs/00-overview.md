@@ -21,7 +21,7 @@ Files are numbered in the order you build them — each depends on the one befor
 15. `15-refresh-token-rotation.md` — verify + harden the client for rotating refresh tokens & reuse detection (backend Step 22); adds an in-flight refresh dedupe in `proxy.ts`
 16. `16-wishlist.md` — **DONE** — save/list/remove packages for USERs — heart button + `/user-dashboard/wishlist` (backend wishlist module)
 17. `17-notifications.md` — **DONE** — in-app notification bell (any role) + standalone `/notifications` page with link translation (backend notification module)
-18. `18-blog-comments.md` — one-level threaded comments on public blog posts with owner/admin delete (backend blog-comments module)
+18. `18-blog-comments.md` — **DONE** — one-level threaded comments on public blog posts with owner/admin delete (backend blog-comments module)
 19. `19-review-edit-delete.md` — author edit + author/admin soft-delete of reviews, live package-rating recompute (backend review edit/delete) — requires a one-field `user.id` addition to the server's review list select
 20. `20-refunds-on-cancel.md` — surface the live SSLCommerz refund outcome from booking cancellation; fix the `TPayment` refund fields (`refundedAt` → `refundCompletedAt`/`refundInitiatedAt`) — backend Step 23
 
