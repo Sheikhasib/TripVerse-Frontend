@@ -12,10 +12,8 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/lib/api/client"
 import type { TNotification, TNotificationType } from "@/lib/api/notifications"
-import {
-  formatRelativeTime,
-  resolveNotificationLink,
-} from "@/lib/notifications"
+import { resolveNotificationLink } from "@/lib/notifications"
+import { formatRelativeTime } from "@/lib/format"
 import { useMe } from "@/hooks/use-me"
 import { useMarkAsRead } from "@/hooks/use-notifications"
 
