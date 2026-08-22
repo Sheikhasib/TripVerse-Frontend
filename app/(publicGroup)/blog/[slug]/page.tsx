@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { blogApi } from "@/lib/api/blog"
+import { CommentSection } from "@/components/blog/comment-section"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { GoBack } from "@/components/shared/go-back"
 
@@ -101,6 +102,10 @@ export default async function BlogPostPage({ params }: PageProps) {
             {paragraph}
           </p>
         ))}
+      </div>
+
+      <div className="mt-10 rounded-lg border border-border bg-card p-6">
+        <CommentSection slug={slug} />
       </div>
     </article>
   )
