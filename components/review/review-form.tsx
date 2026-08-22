@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Spinner } from "@phosphor-icons/react"
-import Link from "next/link"
-import { toast } from "sonner"
-import { useMe } from "@/hooks/use-me"
-import { reviewsApi } from "@/lib/api/reviews"
-import { ApiError } from "@/lib/api/client"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Spinner } from "@phosphor-icons/react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { useMe } from "@/hooks/use-me";
+import { reviewsApi } from "@/lib/api/reviews";
+import { ApiError } from "@/lib/api/client";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -25,53 +25,53 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import {
   createReviewSchema,
   type TCreateReviewSchema,
-} from "@/lib/validations/review"
+} from "@/lib/validations/review";
 
 interface ReviewFormProps {
-  packageId: string
-  slug: string
+  packageId: string;
+  slug: string;
 }
 
-const RATING_LABELS = [
+export const RATING_LABELS = [
   "1 star - Poor",
   "2 stars - Fair",
   "3 stars - Average",
   "4 stars - Good",
   "5 stars - Excellent",
-]
+];
 
 export function ReviewForm({ packageId, slug }: ReviewFormProps) {
-  const router = useRouter()
-  const { user, isLoading: userLoading } = useMe()
+  const router = useRouter();
+  const { user, isLoading: userLoading } = useMe();
 
   const form = useForm<TCreateReviewSchema>({
     resolver: zodResolver(createReviewSchema),
     defaultValues: { packageId, rating: 1, comment: "" },
-  })
+  });
 
   const onSubmit = async (values: TCreateReviewSchema) => {
     try {
-      await reviewsApi.createReview(values)
-      toast.success("Review submitted.")
-      router.push(`/packages/${slug}`)
-      router.refresh()
+      await reviewsApi.createReview(values);
+      toast.success("Review submitted.");
+      router.push(`/packages/${slug}`);
+      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
-      )
+      );
     }
-  }
+  };
 
   if (userLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <Spinner className="size-5 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -85,7 +85,7 @@ export function ReviewForm({ packageId, slug }: ReviewFormProps) {
           <Link href={`/login?redirectTo=/packages/${slug}`}>Sign in</Link>
         </Button>
       </div>
-    )
+    );
   }
 
   if (user?.role !== "USER") {
@@ -96,7 +96,7 @@ export function ReviewForm({ packageId, slug }: ReviewFormProps) {
           Reviews are written by travellers who completed the trip.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -179,5 +179,5 @@ export function ReviewForm({ packageId, slug }: ReviewFormProps) {
         </form>
       </Form>
     </div>
-  )
+  );
 }

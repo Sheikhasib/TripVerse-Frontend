@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const createReviewSchema = z.object({
   packageId: z
@@ -14,5 +14,26 @@ export const createReviewSchema = z.object({
     .trim()
     .min(1, "Comment must not be empty")
     .max(1000, "Comment must be at most 1000 characters"),
-})
-export type TCreateReviewSchema = z.infer<typeof createReviewSchema>
+});
+export type TCreateReviewSchema = z.infer<typeof createReviewSchema>;
+
+export const updateReviewSchema = z
+  .object({
+    rating: z
+      .number({ message: "Rating is required" })
+      .int("Rating must be a whole number")
+      .min(1, "Rating must be at least 1")
+      .max(5, "Rating must be at most 5")
+      .optional(),
+    comment: z
+      .string()
+      .trim()
+      .min(1, "Comment must not be empty")
+      .max(1000, "Comment must be at most 1000 characters")
+      .optional(),
+  })
+  .refine(
+    (data) => data.rating !== undefined || data.comment !== undefined,
+    "At least one of rating or comment must be provided",
+  );
+export type TUpdateReviewSchema = z.infer<typeof updateReviewSchema>;
