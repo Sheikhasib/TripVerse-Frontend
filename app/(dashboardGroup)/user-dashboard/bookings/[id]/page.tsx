@@ -44,10 +44,21 @@ export default function UserBookingDetailPage() {
 
   const cancelMutation = useMutation({
     mutationFn: () => bookingsApi.updateBookingStatus(id, "CANCELLED"),
-    onSuccess: () => {
+    onSuccess: (updatedBooking) => {
       queryClient.invalidateQueries({ queryKey: ["booking", id] })
       queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
-      toast.success("Booking cancelled.")
+      if (!updatedBooking.refund) {
+        toast.success("Booking cancelled.")
+      } else if (updatedBooking.refund.status === "SUCCESS") {
+        toast.success(
+          `Booking cancelled. Refund of ${formatBDT(Number(updatedBooking.totalPrice))} is on its way.`,
+        )
+      } else {
+        toast.warning(updatedBooking.refund.message, {
+          description:
+            "The cancellation is complete; we'll follow up on the refund.",
+        })
+      }
     },
     onError: (error) => {
       toast.error(

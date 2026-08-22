@@ -145,9 +145,9 @@ export default function UserPaymentsPage() {
                     {latest ? (
                       <div className="flex flex-col gap-0.5">
                         <PaymentStatusBadge status={latest.status} />
-                        {latest.status === "REFUNDED" && latest.refundedAt && (
+                        {latest.status === "REFUNDED" && latest.refundCompletedAt && (
                           <span className="text-xs text-muted-foreground">
-                            Refunded {formatDate(latest.refundedAt)}
+                            Refunded {formatDate(latest.refundCompletedAt)}
                             {latest.refundRefId ? ` · #${latest.refundRefId.slice(0, 8)}` : ""}
                           </span>
                         )}

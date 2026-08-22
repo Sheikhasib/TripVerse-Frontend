@@ -28,6 +28,10 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 
 export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
   const isRefunded = payment.status === "REFUNDED"
+  const isRefundPending =
+    payment.status === "SUCCESS" &&
+    Boolean(payment.refundInitiatedAt) &&
+    !payment.refundCompletedAt
 
   return (
     <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5">
@@ -81,10 +85,10 @@ export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
         {payment.paidAt && (
           <DetailRow label="Paid at" value={formatDate(payment.paidAt)} />
         )}
-        {isRefunded && payment.refundedAt && (
+        {isRefunded && payment.refundCompletedAt && (
           <DetailRow
             label="Refunded at"
-            value={formatDate(payment.refundedAt)}
+            value={formatDate(payment.refundCompletedAt)}
           />
         )}
         {isRefunded && payment.refundRefId && (
@@ -94,6 +98,13 @@ export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
           <p className="text-sm text-muted-foreground">Payment status</p>
           <PaymentStatusBadge status={payment.status} />
         </div>
+
+        {isRefundPending && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <ArrowClockwise size={14} className="shrink-0" />
+            Refund pending — support will follow up.
+          </p>
+        )}
 
         <div className="h-px bg-border" />
 

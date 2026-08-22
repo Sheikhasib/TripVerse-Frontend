@@ -68,9 +68,9 @@ export function PaymentAttempts({
                 {payment.tranId}
               </p>
             )}
-            {payment.status === "REFUNDED" && payment.refundedAt ? (
+            {payment.status === "REFUNDED" && payment.refundCompletedAt ? (
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                Refunded {formatDateTime(payment.refundedAt)}
+                Refunded {formatDateTime(payment.refundCompletedAt)}
               </p>
             ) : (
               payment.paidAt && (

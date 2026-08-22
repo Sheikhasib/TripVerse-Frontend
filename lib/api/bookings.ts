@@ -19,7 +19,8 @@ export type TPayment = {
   valId?: string | null
   paidAt?: string | null
   refundRefId?: string | null
-  refundedAt?: string | null
+  refundInitiatedAt?: string | null
+  refundCompletedAt?: string | null
 }
 
 export type TBookingStatus =
@@ -54,6 +55,7 @@ export type TBooking = {
   package: TBookingPackage
   user?: TBookingUser
   payments?: TPayment[]
+  refund?: { status: "SUCCESS" } | { status: "FAILED"; message: string }
 }
 
 export type TBookingQuery = {
