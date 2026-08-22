@@ -2,17 +2,14 @@
 
 ## Status
 
-**NEW.** Promoted out of `12-explicitly-cut.md`. The backend ships review edit and soft-delete
+**DONE.** Promoted out of `12-explicitly-cut.md`. The backend ships review edit and soft-delete
 (server Step ~23): the author can `PATCH` their own review; the author or an ADMIN can `DELETE`
-it. Both recompute the package's average rating in the same transaction. The client only has
-`createReview` + `getReviews` today — no edit, no delete, and the list payload is missing the
-author `id` needed to show ownership controls.
+it. Both recompute the package's average rating in the same transaction.
 
-**Required backend tweak (flagged):** the list select in `review.service.ts`
-(`listPackageReviews`) is `user: { select: { name: true, avatarUrl: true } }`. Add `id: true`
-so the client can tell "this is my review". This is the same one-field pattern as the `valId`
-addition in Step 13 — no schema/API shape change otherwise. Without it, ownership must be
-guessed from the name, which is fragile and wrong for duplicate names.
+**Required backend tweak (landed):** the list select in `review.service.ts`
+(`listPackageReviews`) gained `user.id` (server commit `a1e48bc`) so the client can tell
+"this is my review" directly instead of guessing from the name — the same one-field pattern
+as the `valId` addition in Step 13.
 
 ## Overview
 
@@ -158,3 +155,32 @@ Runnable via `npm run dev` with the server running review edit/delete (and the `
 - A non-author sees no controls on another user's review; an ADMIN sees controls on every review.
 - Anonymous visitors see no controls and no delete/edit affordances.
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+
+## As built (implementation notes)
+
+- **Spec bug corrected — Edit is author-only.** The Components section offered Edit under
+  `(own || ADMIN)`, but `updateReview` matches `{ id, userId }` and its route runs
+  `auth(Role.USER)` (ADMINs are rejected at the middleware), so an admin editing someone
+  else's review was a guaranteed 404/403. Shipped rule mirrors each endpoint exactly:
+  Edit = author only; Delete = author or ADMIN (matching `deleteReview`).
+- **The flagged backend tweak landed first** as its own commit + push on the server repo
+  (`a1e48bc`: `id: true` in the list user select), so `TReview.user.id` could be typed
+  required from day one.
+- **Validation lives in `lib/validations/review.ts`, not inline types:** `updateReviewSchema`
+  mirrors the server verbatim (rating int 1..5 optional · comment trim 1..1000 optional ·
+  refine "at least one of rating or comment") and drives the dialog via rhf + zodResolver,
+  matching every other form in the repo (AGENTS.md architecture rule).
+- **Empty-page guard is event-driven, not an effect:** deleting the last row of page N > 1
+  steps back via an `onDeleted` callback from `ReviewDeleteDialog`; the planned `useEffect`
+  was rejected by the new `react-hooks/set-state-in-effect` lint rule. Sibling pattern:
+  the comment-section jump-to-page-1-after-posting fix (`9a2f563`).
+- Dialogs own their mutations and stay mounted while closed so Radix exit animations play;
+  the list swaps the target row before reopening. Shared success flow: prefix-invalidate
+  `["reviews", packageId]` → toast → `router.refresh()` (SSR header average) → close;
+  Esc/overlay close is suppressed mid-flight; errors surface `ApiError.message` verbatim.
+- `12-explicitly-cut.md` left untouched: the feature already sat in the "Promoted out" table
+  and line 3 stays as the historical record (precedent from blog comments / email verification).
+- Verified mechanically: client `npm run typecheck`, `npm run lint`, `npm run build` green;
+  server `tsc --noEmit` green after the select change. Live authed click-through (edit as
+  author, admin delete of foreign review, header average refresh, 409 re-review after
+  delete) still to exercise against running servers.
