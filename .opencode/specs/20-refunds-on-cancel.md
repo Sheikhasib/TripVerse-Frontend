@@ -2,13 +2,12 @@
 
 ## Status
 
-**HARDEN + FIX MISMATCHES.** The backend upgraded cancellation (server Step 23): cancelling a
-booking with settled money now runs a **live SSLCommerz refund** synchronously and returns the
-outcome in the cancel response (`refund: { status: "SUCCESS" } | { status: "FAILED", message }`).
-The client's cancel handler ignores this, and the payment types/display reference a field the
-server never sends (`refundedAt` instead of `refundCompletedAt`). This step fixes the type
-contract, surfaces the refund outcome to the user, and completes the payment display for the
-REFUNDED state.
+**DONE.** The backend upgraded cancellation (server Step 23, commit `a8ecc04`, hardened by
+`294a873`): cancelling a booking with settled money now runs a **live SSLCommerz refund**
+synchronously and returns the outcome in the cancel response
+(`refund: { status: "SUCCESS" } | { status: "FAILED", message }`). The client types this
+contract, surfaces the refund outcome to the user, and renders the full refund metadata set on
+the receipt and attempts list.
 
 ## Overview
 
@@ -151,3 +150,26 @@ creds (a real sandbox payment must be settled before cancelling):
 - `npm run typecheck` passes with the corrected `TPayment` (`refundedAt` is gone everywhere —
   grep for it and confirm zero references).
 - `npm run lint` and `npm run typecheck` pass. Commit + push this step (AGENTS.md workflow).
+
+## As built (implementation notes)
+
+- **One file beyond this spec's list:** `app/(dashboardGroup)/user-dashboard/payments/page.tsx`
+  carried the same phantom `payment.refundedAt` read ("Refunded …" line in the per-booking
+  latest-status row) — fixed in the same commit (`db81bbb`) so the DoD grep is truly zero.
+- **Server side landed as its own commits on the server repo:** `a8ecc04` (real SSLCommerz
+  refund on cancellation, Step 23) and `294a873` (only gateway `status=success` counts as
+  refund success). The response spreads `refund` into the booking payload only when a refund
+  was attempted — `...(refund ? { refund } : {})` — so PENDING cancellations carry no key,
+  matching the client's optional `TBooking.refund`.
+- **Toast copy follows the spec verbatim:** plain "Booking cancelled." when nothing was
+  charged; amount named via `formatBDT(booking.totalPrice)` on SUCCESS; the server's failure
+  message surfaces word-for-word via `toast.warning` with the "cancellation is complete"
+  follow-up line. The outcome is read from the mutation's return payload — no re-fetch.
+- Receipt shows REFUNDED state with reference + timestamp, and the muted
+  "Refund pending — support will follow up." note for a SUCCESS payment with
+  `refundInitiatedAt` but no `refundCompletedAt`; attempts list keys the blue "Refunded …"
+  line off `refundCompletedAt`.
+- Verified mechanically: `npm run typecheck`, `npm run lint` green; `refundedAt` grep returns
+  only historical mentions inside these spec files. Live sandbox click-through (settled
+  payment → cancel → REFUNDED flip + toast; forced gateway failure → pending note) not yet
+  exercised against running servers.
