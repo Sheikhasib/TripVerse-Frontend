@@ -1,5 +1,6 @@
 import { apiClient, apiClientFull } from "./client"
 import type { TCreateBookingSchema } from "@/lib/validations/booking"
+import type { TRefundRequest } from "./refunds"
 
 export type TPaymentStatus =
   | "INITIATED"
@@ -56,6 +57,7 @@ export type TBooking = {
   user?: TBookingUser
   payments?: TPayment[]
   refund?: { status: "SUCCESS" } | { status: "FAILED"; message: string }
+  refundRequests?: TRefundRequest[]
 }
 
 export type TBookingQuery = {
