@@ -28,6 +28,14 @@ import {
 import { RefundStatusBadge } from "./refund-status-badge"
 import { cn } from "@/lib/utils"
 
+// Lightweight sentinel — only instanceof checks match it; no toast needed.
+class ClientValidationError extends Error {
+  constructor() {
+    super()
+    this.name = "ClientValidationError"
+  }
+}
+
 interface RefundReviewDialogProps {
   request: TRefundRequest
   open: boolean
@@ -74,7 +82,7 @@ export function RefundReviewDialog({
     mutationFn: () => {
       if (action === "REJECT" && !note.trim()) {
         setNoteError("A review note is required when rejecting.")
-        throw new Error("__validation")
+        throw new ClientValidationError()
       }
       setNoteError("")
 
@@ -122,7 +130,7 @@ export function RefundReviewDialog({
       onOpenChange(false)
     },
     onError: (error) => {
-      if (error instanceof Error && error.message === "__validation") return
+      if (error instanceof ClientValidationError) return
       toast.error(
         error instanceof ApiError ? error.message : "Something went wrong.",
       )

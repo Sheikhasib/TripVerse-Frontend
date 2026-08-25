@@ -281,6 +281,7 @@ export function RefundRequestDialog({
                   ) : (
                     <button
                       type="button"
+                      aria-label="Add supporting document"
                       onClick={() => inputRef.current?.click()}
                       disabled={uploading}
                       className="flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-input text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed"

@@ -143,7 +143,7 @@ None. Each refunds endpoint feeds exactly one page/dialog; use inline
   appears only for docs-backed categories, enforced by the Zod `superRefine`). Below the
   category field show a muted helper line: "Suggested refund: ~{pct}% ({tierLabel}) based on
   your travel date" computed via `suggestRefundPercentage(category,
-  floorDaysUntilTravel(travelDate))`, labeled "estimate only — finalized at review".
+  daysUntilTravel(travelDate))`, labeled "estimate only — finalized at review".
   Submit button shows pending state ("Submitting…") + disabled; success toast
   "Refund application submitted." then `onSuccess()` closes the dialog.
 - `components/refund/refund-request-card.tsx` — read-only view of one application for the
@@ -177,7 +177,8 @@ None. Each refunds endpoint feeds exactly one page/dialog; use inline
   (opens dialog), APPROVED → "Retry payout" button (visible whenever status === "APPROVED";
   the server no-ops safely when nothing is owed) calling `refundsApi.retryRefundPayout` with
   pending/disabled state and the same SUCCESS/FAILED toast pair as the dialog. Query key:
-  `["admin-refunds", status, page]`.
+  `["admin-refunds", status, page]`, `placeholderData` keep-previous,
+  `staleTime: 30_000`, `retry: false` (admin list fetches are not retried automatically).
 
 **Modify:**
 
@@ -261,9 +262,9 @@ No new dependencies.
 ### UI & animation
 
 - All clickable elements: `cursor-pointer` + `transition-colors duration-200`.
-- Buttons: framer-motion `whileTap={{ scale: 0.97 }}`; cards `whileHover={{ y: -4 }}`;
-  tables/lists `motion.div` stagger `staggerChildren: 0.08` where the surrounding pages
-  already animate.
+- Buttons: framer-motion `whileTap={{ scale: 0.97 }}` on all action buttons;
+  `whileHover={{ y: -4 }}` on cards where the surrounding pages already use it (not applied on
+  `RefundRequestCard` or `RefundReviewDialog` — static info cards).
 - Icons from `@phosphor-icons/react` (e.g. `ArrowsCounterClockwise`, `HandCoins`) — never emoji.
 - Evidence images: `next/image` with `fill` + `sizes` + `onError` fallback (res.cloudinary.com
   already whitelisted in `next.config.ts`).
