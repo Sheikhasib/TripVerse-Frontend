@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { CaretLeft, CaretRight } from "@phosphor-icons/react"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { PackageCard } from "@/components/shared/package-card"
@@ -25,12 +25,23 @@ export function FeaturedPackages({ packages }: FeaturedPackagesProps) {
     el.scrollBy({ left: dir * (width + 24), behavior: "smooth" })
   }
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     const el = scrollerRef.current
     if (!el) return
     setCanPrev(el.scrollLeft > 0)
     setCanNext(el.scrollLeft < el.scrollWidth - el.clientWidth - 1)
-  }
+  }, [])
+
+  // Compute the arrows' enabled state on mount and whenever the track resizes
+  // (onScroll alone never fires before the first interaction).
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    handleScroll()
+    const observer = new ResizeObserver(handleScroll)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [handleScroll, packages.length])
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -57,13 +68,13 @@ export function FeaturedPackages({ packages }: FeaturedPackagesProps) {
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="-mx-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-2 [scrollbar-width:thin] sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+        className="-mx-4 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:thin] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:-mx-8 lg:scroll-px-8 lg:px-8"
       >
         {packages.map((pkg) => (
           <div
             key={pkg.id}
             data-card
-            className="w-full max-w-[320px] shrink-0 snap-start sm:w-[320px]"
+            className="h-auto w-full max-w-[320px] shrink-0 snap-start sm:w-[320px]"
           >
             <PackageCard pkg={pkg} rating={pkg.rating} />
           </div>

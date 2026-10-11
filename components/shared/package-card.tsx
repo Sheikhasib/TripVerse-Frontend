@@ -36,7 +36,7 @@ export function PackageCard({ pkg, rating, reviewCount, wishlist }: PackageCardP
   }
 
   return (
-    <div className="group/card relative flex flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
+    <div className="group/card relative flex h-full flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
       {wishlist && (
         <button
           type="button"
@@ -100,19 +100,22 @@ export function PackageCard({ pkg, rating, reviewCount, wishlist }: PackageCardP
           {pkg.description}
         </p>
 
-        {typeof rating === "number" && rating > 0 && (
-          <div className="flex items-center gap-1.5">
-            <Star size={14} weight="fill" className="text-accent" />
-            <span className="text-xs font-semibold tabular-nums">
-              {rating.toFixed(1)}
-            </span>
-            {typeof reviewCount === "number" && reviewCount > 0 && (
-              <span className="text-xs text-muted-foreground">
-                ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+        {/* Reserve the rating row's height so cards without a rating stay aligned. */}
+        <div className="flex min-h-5 items-center gap-1.5">
+          {typeof rating === "number" && rating > 0 && (
+            <>
+              <Star size={14} weight="fill" className="text-accent" />
+              <span className="text-xs font-semibold tabular-nums">
+                {rating.toFixed(1)}
               </span>
-            )}
-          </div>
-        )}
+              {typeof reviewCount === "number" && reviewCount > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+                </span>
+              )}
+            </>
+          )}
+        </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
           <div>
