@@ -170,10 +170,10 @@ export function PackageForm({
               className={cn(
                 "rounded border px-2 py-0.5 text-[10px] font-semibold tracking-widest uppercase",
                 packageRow.status === "APPROVED"
-                  ? "border-emerald-500/30 text-emerald-600"
+                  ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                   : packageRow.status === "REJECTED"
-                    ? "border-red-500/30 text-red-600"
-                    : "border-amber-500/30 text-amber-600",
+                    ? "border-red-500/30 text-red-600 dark:text-red-400"
+                    : "border-amber-500/30 text-amber-600 dark:text-amber-400",
               )}
             >
               {packageRow.status.toLowerCase()}

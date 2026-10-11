@@ -43,9 +43,9 @@ export function PaymentReceipt({ payment, booking }: PaymentReceiptProps) {
       >
         <div className="flex items-center gap-3">
           {isRefunded ? (
-            <ArrowClockwise size={22} className="text-blue-600" />
+            <ArrowClockwise size={22} className="text-blue-600 dark:text-blue-400" />
           ) : (
-            <CheckCircle size={22} className="text-emerald-600" />
+            <CheckCircle size={22} className="text-emerald-600 dark:text-emerald-400" />
           )}
           <div>
             <h2 className="text-lg font-semibold">

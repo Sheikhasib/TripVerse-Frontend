@@ -164,7 +164,7 @@ function ReviewItem({
                 onClick={onEdit}
                 aria-label="Edit review"
                 title="Edit review"
-                className="cursor-pointer rounded p-1.5 text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-foreground"
+                className="cursor-pointer rounded p-1.5 text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
               >
                 <PencilSimple size={16} />
               </motion.button>

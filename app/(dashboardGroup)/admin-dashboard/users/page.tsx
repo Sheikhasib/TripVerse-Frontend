@@ -132,8 +132,8 @@ export default function AdminUsersPage() {
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
                         user.status === "ACTIVE"
-                          ? "bg-emerald-500/10 text-emerald-600"
-                          : "bg-red-500/10 text-red-600"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-red-500/10 text-red-600 dark:text-red-400"
                       }`}
                     >
                       {user.status}
