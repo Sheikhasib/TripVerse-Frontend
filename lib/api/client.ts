@@ -36,6 +36,25 @@ const isServer = () => typeof window === "undefined"
 const getBaseUrl = () =>
   isServer() ? (process.env.BACKEND_API_URL ?? "") : ""
 
+// A 401 here means wrong credentials, not a revoked session.
+const CREDENTIAL_PATHS = [
+  "/api/auth/login",
+  "/api/auth/google",
+  "/api/auth/demo-login",
+]
+
+let sessionExpiring = false
+
+const expireSession = () => {
+  // Parallel queries can all 401 at once; navigate only once.
+  if (sessionExpiring) return
+  sessionExpiring = true
+  const here = window.location.pathname + window.location.search
+  window.location.assign(
+    `/session-expired?redirectTo=${encodeURIComponent(here)}`,
+  )
+}
+
 const isJsonBody = (body: TOptions["body"]) =>
   body != null &&
   typeof body !== "string" &&
@@ -98,6 +117,18 @@ const request = async <T>(
     envelope = (await res.json()) as TApiEnvelope<T>
   } catch {
     throw new ApiError(res.status, `Request failed with status ${res.status}`)
+  }
+
+  // A token was sent and refused: the backend revoked this session (logout of
+  // the same account elsewhere, password or role change). Retrying can't
+  // help, so clear the cookies and send the user to log in again.
+  if (
+    res.status === 401 &&
+    token &&
+    !isServer() &&
+    !CREDENTIAL_PATHS.some((p) => path.startsWith(p))
+  ) {
+    expireSession()
   }
 
   if (!res.ok || envelope.success === false) {

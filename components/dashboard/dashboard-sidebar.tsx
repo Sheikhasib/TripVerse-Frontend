@@ -38,8 +38,15 @@ function SidebarContents({ onNavigate }: { onNavigate?: () => void }) {
 
   const sections = user ? NAV_SECTIONS_BY_ROLE[user.role] ?? [] : []
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`)
+  // The Overview link is the dashboard root ("/user-dashboard" etc.), which
+  // every other dashboard page starts with, so it only matches exactly.
+  const isActive = (href: string) => {
+    const isDashboardRoot = href.split("/").length === 2
+    return (
+      pathname === href ||
+      (!isDashboardRoot && pathname.startsWith(`${href}/`))
+    )
+  }
 
   const logout = useLogout()
   const handleLogout = () => {

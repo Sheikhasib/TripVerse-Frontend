@@ -22,8 +22,10 @@ export const useNotifications = ({
   page = 1,
   limit = 20,
   unread,
-}: { page?: number; limit?: number; unread?: boolean } = {}) =>
-  useQuery({
+}: { page?: number; limit?: number; unread?: boolean } = {}) => {
+  const hasToken = Boolean(cookieUtils.getCookie("accessTokenClient"))
+
+  return useQuery({
     // limit is part of the key: the bell (10) and the /notifications page
     // (20) can be co-mounted on page 1 with identical other segments —
     // without it, whichever fetches first owns one cache entry for both.
@@ -31,7 +33,10 @@ export const useNotifications = ({
     queryFn: () => notificationsApi.getMyNotifications({ page, limit, unread }),
     placeholderData: (previousData) => previousData,
     staleTime: 30 * 1000,
+    // Same gate as the badge poll: anonymous visitors would only get a 401.
+    enabled: hasToken,
   })
+}
 
 // Both mutations share one invalidation prefix: ["notifications"] matches the
 // unread-count key AND every list key, so the badge and dropdown/page agree
