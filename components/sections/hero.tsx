@@ -113,10 +113,12 @@ export function HeroSection({ items }: HeroSectionProps) {
           {current && (
             <div className="hidden items-center gap-3 rounded-full bg-background/70 px-5 py-2.5 ring-1 ring-foreground/10 backdrop-blur-sm sm:flex">
               <span className="text-sm font-medium">{current.title}</span>
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Star className="size-3.5 fill-accent text-accent" weight="fill" />
-                {current.rating?.toFixed(1)}
-              </span>
+              {(current.rating ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="size-3.5 fill-accent text-accent" weight="fill" />
+                  {current.rating.toFixed(1)}
+                </span>
+              )}
               <span className="text-xs font-medium text-primary">
                 from {formatBDT(Number(current.price))}
               </span>
