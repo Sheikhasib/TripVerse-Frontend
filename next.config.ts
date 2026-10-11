@@ -1,21 +1,12 @@
 import type { NextConfig } from "next"
+import { REMOTE_IMAGE_HOSTS } from "./lib/image-hosts"
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-    ],
+    remotePatterns: REMOTE_IMAGE_HOSTS.map((hostname) => ({
+      protocol: "https" as const,
+      hostname,
+    })),
   },
   async rewrites() {
     const backend = process.env.BACKEND_API_URL || "http://localhost:4000"

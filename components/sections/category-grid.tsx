@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { ArrowUpRight, Compass } from "@phosphor-icons/react/dist/ssr"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { cn } from "@/lib/utils"
@@ -73,7 +74,7 @@ function CategoryTile({
     >
       {image ? (
         <Image
-          src={image}
+          src={safeImageSrc(image)}
           alt={category.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

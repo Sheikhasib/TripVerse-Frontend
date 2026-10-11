@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { toast } from "sonner"
 import {
   ArrowDown,
@@ -151,7 +152,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             className="group relative aspect-[4/3] overflow-hidden rounded-md ring-1 ring-foreground/10"
           >
             <Image
-              src={item.url}
+              src={safeImageSrc(item.url)}
               alt={`Package image ${index + 1}`}
               fill
               sizes="(max-width: 640px) 50vw, 200px"

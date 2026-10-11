@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import Link from "next/link"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Plus, Spinner, Trash, PencilLine } from "@phosphor-icons/react"
@@ -130,7 +131,7 @@ export default function MyPackagesPage() {
                     <div className="flex items-center gap-3">
                       {pkg.images?.[0] && (
                         <Image
-                          src={pkg.images[0]}
+                          src={safeImageSrc(pkg.images[0])}
                           alt={pkg.title}
                           width={48}
                           height={36}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowRight, CaretDown, Star } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
@@ -55,7 +56,7 @@ export function HeroSection({ items }: HeroSectionProps) {
                 transition={{ duration: 9, ease: "linear" }}
               >
                 <Image
-                  src={current.images[0]}
+                  src={safeImageSrc(current.images[0])}
                   alt={current.title}
                   fill
                   priority={index === 0}

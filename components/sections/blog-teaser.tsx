@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import Link from "next/link"
 import { ArrowRight, CalendarBlank } from "@phosphor-icons/react/dist/ssr"
 import { SectionHeading } from "@/components/shared/section-heading"
@@ -38,7 +39,7 @@ export function BlogTeaser({ posts }: BlogTeaserProps) {
           >
             {feature.coverImage ? (
               <Image
-                src={feature.coverImage}
+                src={safeImageSrc(feature.coverImage)}
                 alt={feature.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 66vw"

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { AnimatePresence, motion } from "framer-motion"
 import { Compass } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
@@ -30,7 +31,7 @@ export function PackageImageGallery({ images, title }: PackageImageGalleryProps)
               className="absolute inset-0"
             >
               <Image
-                src={current}
+                src={safeImageSrc(current)}
                 alt={title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 60vw"
@@ -71,7 +72,7 @@ export function PackageImageGallery({ images, title }: PackageImageGalleryProps)
               )}
             >
               <Image
-                src={image}
+                src={safeImageSrc(image)}
                 alt={`${title} ${i + 1}`}
                 fill
                 sizes="112px"

@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import Link from "next/link"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -104,7 +105,7 @@ export default function UserPaymentsPage() {
                     <div className="flex items-center gap-3">
                       {booking.package.images?.[0] && (
                         <Image
-                          src={booking.package.images[0]}
+                          src={safeImageSrc(booking.package.images[0])}
                           alt={booking.package.title}
                           width={48}
                           height={36}

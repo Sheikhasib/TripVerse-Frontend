@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { ArrowRight, CalendarBlank, Compass } from "@phosphor-icons/react/dist/ssr"
 import type { TBlogPostListItem } from "@/lib/api/blog"
 
@@ -21,7 +22,7 @@ export function BlogCard({ post }: BlogCardProps) {
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           {post.coverImage ? (
             <Image
-              src={post.coverImage}
+              src={safeImageSrc(post.coverImage)}
               alt={post.title}
               fill
               className="object-cover transition-all duration-500 group-hover/card:scale-105"

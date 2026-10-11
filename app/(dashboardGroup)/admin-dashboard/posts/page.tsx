@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { blogApi, type TBlogPostStatus } from "@/lib/api/blog"
@@ -123,7 +124,7 @@ export default function AdminPostsPage() {
               <div className="relative mb-3 h-24 w-32">
                 {post.coverImage && (
                   <Image
-                    src={post.coverImage}
+                    src={safeImageSrc(post.coverImage)}
                     alt={post.title}
                     fill
                     sizes="(max-width: 640px) 100vw, 128px"

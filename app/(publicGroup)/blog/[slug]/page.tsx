@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { notFound } from "next/navigation"
 import { blogApi } from "@/lib/api/blog"
 import { CommentSection } from "@/components/blog/comment-section"
@@ -83,7 +84,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       {post.coverImage && (
         <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-lg bg-muted">
           <Image
-            src={post.coverImage}
+            src={safeImageSrc(post.coverImage)}
             alt={post.title}
             fill
             sizes="(max-width: 768px) 100vw, 768px"

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { safeImageSrc } from "@/lib/safe-image"
 import { Clock, MapPin, Star, Compass, Heart, Spinner } from "@phosphor-icons/react"
 import { toast } from "sonner"
 import type { TPublicPackage } from "@/lib/api/packages"
@@ -57,7 +58,7 @@ export function PackageCard({ pkg, rating, reviewCount, wishlist }: PackageCardP
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {imageUrl && !imgError ? (
             <Image
-              src={imageUrl}
+              src={safeImageSrc(imageUrl)}
               alt={pkg.title}
               fill
               className="object-cover transition-all duration-500 group-hover/card:scale-105"
