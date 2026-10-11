@@ -52,7 +52,7 @@ function TrendChip({ trend }: { trend?: number | null }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+        "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 whitespace-nowrap py-0.5 text-[11px] font-semibold tabular-nums",
         up
           ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           : "bg-destructive/10 text-destructive",
@@ -74,8 +74,8 @@ function StatLinkCard({ label, href, icon: Icon, value, trend }: StatDef) {
         <Icon className="size-5" weight="fill" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tight tabular-nums">
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="text-2xl font-bold tracking-tight tabular-nums xl:text-xl 2xl:text-2xl">
             {value}
           </span>
           {trend !== undefined && <TrendChip trend={trend} />}
