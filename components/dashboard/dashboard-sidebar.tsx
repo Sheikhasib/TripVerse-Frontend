@@ -1,11 +1,10 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Compass, SignOut } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { useMe } from "@/hooks/use-me"
-import { authApi } from "@/lib/api/auth"
-import { toast } from "sonner"
+import { useLogout } from "@/hooks/use-logout"
 import { Button } from "@/components/ui/button"
 import {
   Avatar,
@@ -35,7 +34,6 @@ const getInitials = (name: string) =>
 
 function SidebarContents() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, isLoading } = useMe()
 
   const sections = user ? NAV_SECTIONS_BY_ROLE[user.role] ?? [] : []
@@ -43,16 +41,7 @@ function SidebarContents() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`)
 
-  const handleLogout = async () => {
-    try {
-      await authApi.logout()
-      toast.success("Logged out successfully")
-    } catch {
-      toast.error("Failed to log out. Please try again.")
-    }
-    router.push("/login")
-    router.refresh()
-  }
+  const handleLogout = useLogout()
 
   return (
     <div className="flex h-full flex-col">

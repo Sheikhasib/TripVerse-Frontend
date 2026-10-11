@@ -1,9 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner"
 import {
   ArrowLeft,
   Gauge,
@@ -27,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMe } from "@/hooks/use-me"
-import { authApi } from "@/lib/api/auth"
+import { useLogout } from "@/hooks/use-logout"
 
 const getInitials = (name: string) =>
   name
@@ -49,19 +47,9 @@ const roleLabel = (role: string) => {
 }
 
 export function DashboardUserMenu() {
-  const router = useRouter()
   const { user, isLoading } = useMe()
 
-  const handleLogout = async () => {
-    try {
-      await authApi.logout()
-      toast.success("Logged out successfully")
-    } catch {
-      toast.error("Failed to log out. Please try again.")
-    }
-    router.push("/login")
-    router.refresh()
-  }
+  const handleLogout = useLogout()
 
   return (
     <div className="flex items-center gap-2">

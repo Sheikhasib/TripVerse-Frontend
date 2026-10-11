@@ -40,10 +40,9 @@ import {
   X,
 } from "@phosphor-icons/react"
 import { useTheme } from "next-themes"
-import { toast } from "sonner"
-import { authApi } from "@/lib/api/auth"
 import { roleDashboard } from "@/utils/role"
 import { useMe } from "@/hooks/use-me"
+import { useLogout } from "@/hooks/use-logout"
 import { NotificationBell } from "@/components/notifications/notification-bell"
 import type { TRole } from "@/lib/validations/auth"
 
@@ -86,16 +85,10 @@ export function Navbar() {
     setMobileOpen(false)
   }
 
+  const logout = useLogout()
   const handleLogout = async () => {
-    try {
-      await authApi.logout()
-      toast.success("Logged out successfully")
-    } catch {
-      toast.error("Failed to log out. Please try again.")
-    }
     setMobileOpen(false)
-    router.push("/login")
-    router.refresh()
+    await logout()
   }
 
   return (

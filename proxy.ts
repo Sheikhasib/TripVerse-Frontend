@@ -268,9 +268,11 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  // 4. Role mismatch on a dashboard → not-found.
+  // 4. Role mismatch on a dashboard → the user's own dashboard.
   if (isRoleMismatch(pathname, auth!.role)) {
-    const response = NextResponse.redirect(new URL("/not-found", request.url))
+    const response = NextResponse.redirect(
+      new URL(ROLE_DASHBOARD[auth!.role] ?? "/", request.url),
+    )
     attachCookies(response, refreshedPair, false)
     return response
   }
