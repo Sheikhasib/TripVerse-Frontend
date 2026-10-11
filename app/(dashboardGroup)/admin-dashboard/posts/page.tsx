@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
+import { ErrorState } from "@/components/shared/error-state"
 import { PaginationPages } from "@/components/shared/pagination"
 import { Package, Check, X } from "@phosphor-icons/react"
 import { toast } from "sonner"
@@ -28,7 +29,7 @@ export default function AdminPostsPage() {
   const [page, setPage] = useState(1)
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-posts", status, page],
     queryFn: () =>
       blogApi.getAllPosts({
@@ -104,7 +105,13 @@ export default function AdminPostsPage() {
         ))}
       </div>
 
-      {posts.length === 0 ? (
+      {isError ? (
+        <ErrorState
+          title="Couldn't load posts"
+          error={error}
+          onRetry={() => refetch()}
+        />
+      ) : posts.length === 0 ? (
         <EmptyState
           icon={<Package size={40} />}
           title={status === "ALL" ? "No posts found" : `No ${status.toLowerCase()} posts`}
@@ -187,11 +194,13 @@ export default function AdminPostsPage() {
         </div>
       )}
 
-      <PaginationPages
-        page={page}
-        totalPages={data?.meta?.totalPages ?? 1}
-        onPageChange={setPage}
-      />
+      {!isError && (
+        <PaginationPages
+          page={page}
+          totalPages={data?.meta?.totalPages ?? 1}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   )
 }

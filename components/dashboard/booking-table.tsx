@@ -12,6 +12,7 @@ import { formatBDT } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
+import { ErrorState } from "@/components/shared/error-state"
 import { BookingStatusBadge } from "./booking-status-badge"
 import {
   Table,
@@ -27,6 +28,10 @@ export type TBookingViewer = "user" | "agent" | "admin"
 interface BookingTableProps {
   bookings: TBooking[]
   isLoading: boolean
+  // A failed request must not look like "no bookings".
+  isError?: boolean
+  error?: unknown
+  onRetry?: () => void
   viewer: TBookingViewer
   // Query keys to invalidate after a status transition (page-specific).
   invalidateKeys: QueryKey[]
@@ -95,6 +100,9 @@ const getActions = (
 export function BookingTable({
   bookings,
   isLoading,
+  isError,
+  error,
+  onRetry,
   viewer,
   invalidateKeys,
 }: BookingTableProps) {
@@ -124,6 +132,16 @@ export function BookingTable({
 
   if (isLoading) {
     return <RouteLoading className="min-h-60" />
+  }
+
+  if (isError && onRetry) {
+    return (
+      <ErrorState
+        title="Couldn't load bookings"
+        error={error}
+        onRetry={onRetry}
+      />
+    )
   }
 
   if (bookings.length === 0) {

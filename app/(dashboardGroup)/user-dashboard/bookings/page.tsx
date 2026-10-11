@@ -23,7 +23,7 @@ export default function UserBookingsPage() {
   const [status, setStatus] = useState<TBookingStatus | "ALL">("ALL")
   const [page, setPage] = useState(1)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["my-bookings", status, page],
     queryFn: () =>
       bookingsApi.getMyBookings(
@@ -74,6 +74,9 @@ export default function UserBookingsPage() {
       <BookingTable
         bookings={data?.data ?? []}
         isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
         viewer="user"
         invalidateKeys={[["my-bookings"]]}
       />

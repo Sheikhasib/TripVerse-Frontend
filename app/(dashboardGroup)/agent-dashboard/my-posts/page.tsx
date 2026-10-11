@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
+import { ErrorState } from "@/components/shared/error-state"
 import { PaginationPages } from "@/components/shared/pagination"
 import { useMe } from "@/hooks/use-me"
 import { Package, Spinner, PencilLine, Trash } from "@phosphor-icons/react"
@@ -28,7 +29,7 @@ export default function AgentMyPostsPage() {
   const [editing, setEditing] = useState<"new" | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["agent-blog-posts", page],
     queryFn: () => blogApi.getMyPosts({ page, limit: PAGE_SIZE }),
     enabled: Boolean(user),
@@ -151,7 +152,13 @@ export default function AgentMyPostsPage() {
         </div>
       )}
 
-      {posts.length === 0 ? (
+      {isError ? (
+        <ErrorState
+          title="Couldn't load posts"
+          error={error}
+          onRetry={() => refetch()}
+        />
+      ) : posts.length === 0 ? (
         <EmptyState
           icon={<Package size={40} />}
           title="No posts yet"
@@ -209,7 +216,7 @@ export default function AgentMyPostsPage() {
         </div>
       )}
 
-      {posts.length > 0 && (
+      {!isError && posts.length > 0 && (
         <PaginationPages
           page={page}
           totalPages={totalPages}

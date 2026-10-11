@@ -26,7 +26,7 @@ export default function AgentBookingsPage() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["agent-bookings", status, search, page],
     queryFn: () =>
       bookingsApi.getAgentBookings({
@@ -96,6 +96,9 @@ export default function AgentBookingsPage() {
       <BookingTable
         bookings={data?.data ?? []}
         isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
         viewer="agent"
         invalidateKeys={[["agent-bookings"]]}
       />

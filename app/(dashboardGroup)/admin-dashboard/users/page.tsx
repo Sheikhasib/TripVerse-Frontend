@@ -8,6 +8,7 @@ import type { TRole } from "@/lib/validations/auth"
 import { Button } from "@/components/ui/button"
 import { RouteLoading } from "@/components/shared/route-loading"
 import { EmptyState } from "@/components/shared/empty-state"
+import { ErrorState } from "@/components/shared/error-state"
 import { Pagination } from "@/components/shared/pagination"
 import { Users, Trash } from "@phosphor-icons/react"
 import { toast } from "sonner"
@@ -18,7 +19,7 @@ export default function AdminUsersPage() {
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-users", page],
     queryFn: () => usersApi.getAllUsers({ page, limit: PAGE_SIZE }),
     placeholderData: (previousData) => previousData,
@@ -81,7 +82,13 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
-      {users.length === 0 ? (
+      {isError ? (
+        <ErrorState
+          title="Couldn't load users"
+          error={error}
+          onRetry={() => refetch()}
+        />
+      ) : users.length === 0 ? (
         <EmptyState
           icon={<Users size={40} />}
           title="No users found"
@@ -172,7 +179,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {users.length > 0 && (
+      {!isError && users.length > 0 && (
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
     </div>
