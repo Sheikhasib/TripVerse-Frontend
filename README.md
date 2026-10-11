@@ -38,7 +38,7 @@ same-origin `/api` proxy, so the browser never makes cross-origin calls.
 
 | Role         | Capabilities                                                                                                                                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Traveler** | Browse & filter packages, wishlist trips, book with live price estimate, pay via SSLCommerz, track payments & receipts, cancel with automatic refund handling, edit/delete own reviews, in-app notifications |
+| **Traveler** | Browse & filter packages, wishlist trips, book with live price estimate, pay via SSLCommerz, track payments & receipts, apply for refunds on paid bookings with admin review, cancel PENDING bookings directly, edit/delete own reviews, in-app notifications |
 | **Agent**    | Create/edit/delete own packages (Cloudinary image uploads), manage incoming bookings through the full status lifecycle, write & edit travel blog posts                                                      |
 | **Admin**    | Approve/reject packages, moderate posts & bookings, manage users, platform-wide analytics charts, full booking oversight                                                                                     |
 
@@ -67,7 +67,8 @@ These are the capabilities that go past a standard CRUD marketplace:
 - **Review management** — authors edit their reviews; authors or admins soft-delete them.
   Package ratings recompute live.
 - **Refund transparency** — cancelling a paid booking surfaces the real refund outcome
-  from the payment gateway (initiated/completed timestamps), not just a status string.
+  from the payment gateway; applying for a refund on a paid booking tracks policy-tier
+  snapshots, admin decisions, and payout status end-to-end.
 
 ## Tech Stack
 
