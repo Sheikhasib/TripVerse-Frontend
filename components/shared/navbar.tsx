@@ -150,7 +150,8 @@ export function Navbar() {
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
           >
-            {resolvedTheme === "dark" ? <Sun /> : <Moon />}
+            <Sun className="hidden dark:block" />
+            <Moon className="dark:hidden" />
           </Button>
 
           <div className="hidden md:block">

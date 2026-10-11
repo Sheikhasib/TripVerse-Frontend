@@ -95,7 +95,7 @@ function PasswordField({
 
 export function AccountSettingsForm() {
   const { user, isLoading } = useMe()
-  const { resolvedTheme, setTheme } = useTheme()
+  const { setTheme } = useTheme()
 
   const form = useForm<TPasswordSchema>({
     resolver: zodResolver(passwordSchema),
@@ -190,9 +190,7 @@ export function AccountSettingsForm() {
               aria-label="Light mode"
               className={cn(
                 "flex size-8 cursor-pointer items-center justify-center rounded transition-colors",
-                resolvedTheme === "light"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "bg-primary text-primary-foreground dark:bg-transparent dark:text-muted-foreground dark:hover:text-foreground",
               )}
             >
               <Sun size={16} />
@@ -203,9 +201,7 @@ export function AccountSettingsForm() {
               aria-label="Dark mode"
               className={cn(
                 "flex size-8 cursor-pointer items-center justify-center rounded transition-colors",
-                resolvedTheme === "dark"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "text-muted-foreground hover:text-foreground dark:bg-primary dark:text-primary-foreground dark:hover:text-primary-foreground",
               )}
             >
               <Moon size={16} />
