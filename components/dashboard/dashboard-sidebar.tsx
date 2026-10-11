@@ -32,7 +32,7 @@ const getInitials = (name: string) =>
     .join("")
     .toUpperCase()
 
-function SidebarContents() {
+function SidebarContents({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const { user, isLoading } = useMe()
 
@@ -41,7 +41,11 @@ function SidebarContents() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`)
 
-  const handleLogout = useLogout()
+  const logout = useLogout()
+  const handleLogout = () => {
+    onNavigate?.()
+    return logout()
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -70,6 +74,7 @@ function SidebarContents() {
                   <li key={item.href}>
                     <ProgressLink
                       href={item.href}
+                      onClick={onNavigate}
                       className={cn(
                         "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                         active
@@ -166,7 +171,7 @@ export function DashboardMobileNav({
         <SheetDescription className="sr-only">
           Dashboard navigation menu
         </SheetDescription>
-        <SidebarContents />
+        <SidebarContents onNavigate={() => onOpenChange(false)} />
       </SheetContent>
     </Sheet>
   )

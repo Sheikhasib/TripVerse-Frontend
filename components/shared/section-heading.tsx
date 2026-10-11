@@ -19,7 +19,7 @@ export function SectionHeading({
   align = "left",
 }: SectionHeadingProps) {
   const heading: ReactNode = (
-    <div className={align === "center" ? "text-center" : undefined}>
+    <div className={align === "center" ? "min-w-0 text-center" : "min-w-0"}>
       {eyebrow && (
         <p className="text-xs font-semibold tracking-widest uppercase text-primary">
           {eyebrow}
@@ -36,7 +36,7 @@ export function SectionHeading({
 
   return (
     <div
-      className={`mb-10 flex gap-4 ${
+      className={`mb-10 flex flex-wrap gap-4 ${
         align === "center" ? "flex-col items-center" : "items-end justify-between"
       }`}
     >

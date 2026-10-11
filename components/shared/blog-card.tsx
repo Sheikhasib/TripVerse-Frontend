@@ -16,7 +16,7 @@ interface BlogCardProps {
 
 export function BlogCard({ post }: BlogCardProps) {
   return (
-    <article className="group/card flex flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
+    <article className="group/card flex h-full flex-col overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5 transition-all duration-300 hover:ring-primary/30 hover:shadow-lg hover:-translate-y-0.5">
       <Link href={`/blog/${post.slug}`} className="block">
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">
           {post.coverImage ? (
@@ -41,15 +41,15 @@ export function BlogCard({ post }: BlogCardProps) {
           {formatDate(post.createdAt)}
         </span>
         <Link href={`/blog/${post.slug}`}>
-          <h3 className="line-clamp-2 font-display text-lg font-medium tracking-wide transition-colors hover:text-primary">
+          <h3 className="line-clamp-2 break-words font-display text-lg font-medium tracking-wide transition-colors hover:text-primary">
             {post.title}
           </h3>
         </Link>
         <p className="line-clamp-3 text-sm text-muted-foreground leading-relaxed">
           {post.excerpt}
         </p>
-        <div className="mt-auto flex items-center justify-between pt-3">
-          <span className="text-xs font-medium text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
+          <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
             by {post.author.name}
           </span>
           <Link

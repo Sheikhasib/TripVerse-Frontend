@@ -139,7 +139,7 @@ export function BookingTable({
 
   return (
     <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5">
-      <Table>
+      <Table className="min-w-[860px]">
         <TableHeader>
           <TableRow>
             <TableHead>Package</TableHead>
@@ -168,7 +168,7 @@ export function BookingTable({
                   <div className="min-w-0">
                     <Link
                       href={`/packages/${booking.package.slug}`}
-                      className="max-w-[200px] truncate font-medium transition-colors hover:text-primary"
+                      className="block max-w-[200px] truncate font-medium transition-colors hover:text-primary"
                     >
                       {booking.package.title}
                     </Link>

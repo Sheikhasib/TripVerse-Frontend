@@ -111,7 +111,7 @@ export default function MyPackagesPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5">
-          <Table>
+          <Table className="min-w-[860px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Package</TableHead>

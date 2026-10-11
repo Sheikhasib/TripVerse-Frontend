@@ -125,8 +125,8 @@ export function PackageFilters({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-end gap-4 overflow-x-auto pb-1 [scrollbar-width:thin]">
-        <div className="min-w-[160px] flex-1">
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="w-full min-w-0 sm:min-w-[160px] sm:flex-1">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Search
           </label>
@@ -137,7 +137,7 @@ export function PackageFilters({
           />
         </div>
 
-        <div className="w-36 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-36 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Category
           </label>
@@ -155,7 +155,7 @@ export function PackageFilters({
           </select>
         </div>
 
-        <div className="w-36 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-36 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Location
           </label>
@@ -166,7 +166,7 @@ export function PackageFilters({
           />
         </div>
 
-        <div className="w-36 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-36 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Min Rating
           </label>
@@ -182,7 +182,7 @@ export function PackageFilters({
           </select>
         </div>
 
-        <div className="w-40 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-40 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Sort By
           </label>
@@ -205,7 +205,7 @@ export function PackageFilters({
           </select>
         </div>
 
-        <div className="w-20 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-20 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Min Price
           </label>
@@ -218,7 +218,7 @@ export function PackageFilters({
           />
         </div>
 
-        <div className="w-20 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-20 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Max Price
           </label>
@@ -231,7 +231,7 @@ export function PackageFilters({
           />
         </div>
 
-        <div className="w-24 shrink-0">
+        <div className="w-[calc(50%-0.5rem)] sm:w-24 sm:shrink-0">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Max Days
           </label>

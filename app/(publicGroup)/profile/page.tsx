@@ -97,7 +97,7 @@ export default function ProfilePage() {
         Manage your account details
       </p>
 
-      <div className="mt-8 flex items-center gap-4 rounded-lg bg-card p-6 ring-1 ring-foreground/5">
+      <div className="mt-8 flex flex-wrap items-center gap-4 rounded-lg bg-card p-6 ring-1 ring-foreground/5">
         <Avatar className="size-14">
           {user.avatarUrl ? (
             <AvatarImage src={user.avatarUrl} alt={user.name} />
@@ -107,14 +107,14 @@ export default function ProfilePage() {
             </AvatarFallback>
           )}
         </Avatar>
-        <div>
-          <p className="text-lg font-semibold">{user.name}</p>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-semibold">{user.name}</p>
+          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
           <p className="mt-1 text-xs font-semibold tracking-widest uppercase text-primary">
             {user.role}
           </p>
         </div>
-        <Button variant="outline" asChild className="ml-auto">
+        <Button variant="outline" asChild className="sm:ml-auto">
           <Link href={roleDashboard(user.role)}>Go to dashboard</Link>
         </Button>
       </div>

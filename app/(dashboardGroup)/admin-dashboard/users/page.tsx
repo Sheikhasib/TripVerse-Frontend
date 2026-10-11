@@ -89,7 +89,7 @@ export default function AdminUsersPage() {
         />
       ) : (
         <div className="overflow-x-auto rounded-lg bg-card ring-1 ring-foreground/5">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="px-4 py-3 font-medium">Name</th>

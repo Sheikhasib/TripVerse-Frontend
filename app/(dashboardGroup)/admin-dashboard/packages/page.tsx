@@ -134,7 +134,7 @@ export default function AdminPackagesPage() {
         />
       ) : (
         <div className="overflow-hidden rounded-lg bg-card ring-1 ring-foreground/5">
-          <Table>
+          <Table className="min-w-[760px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Package</TableHead>
