@@ -125,12 +125,13 @@ export function PackageFilters({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-start gap-4">
         <div className="w-full min-w-0 sm:min-w-[160px] sm:flex-1">
           <label className="mb-1.5 block text-[10px] font-semibold tracking-widest uppercase text-muted-foreground">
             Search
           </label>
           <Input
+            className="h-10"
             placeholder="Search packages..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -160,6 +161,7 @@ export function PackageFilters({
             Location
           </label>
           <Input
+            className="h-10"
             placeholder="e.g. Khulna"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -212,7 +214,8 @@ export function PackageFilters({
           <Input
             type="number"
             min={0}
-            placeholder="$0"
+            className="h-10"
+            placeholder="৳0"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
@@ -225,7 +228,8 @@ export function PackageFilters({
           <Input
             type="number"
             min={0}
-            placeholder="$999"
+            className="h-10"
+            placeholder="Any"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
           />
@@ -238,6 +242,7 @@ export function PackageFilters({
           <Input
             type="number"
             min={1}
+            className="h-10"
             placeholder="Any"
             value={maxDuration}
             onChange={(e) => setMaxDuration(e.target.value)}
