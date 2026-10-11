@@ -78,6 +78,7 @@ const PUBLIC_EXACT_PATHS = [
   "/verify-email",
   "/forgot-password",
   "/reset-password",
+  "/session-expired",
 ]
 
 const PUBLIC_PREFIXES = ["/packages", "/blog", "/payment"]
