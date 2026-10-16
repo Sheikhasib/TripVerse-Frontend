@@ -118,6 +118,15 @@
     background-color: var(--background);
     color: var(--foreground);
   }
+  /* Native <select> popups are drawn by the browser. Our selects have a
+     transparent background, so Chrome on Windows paints the popup white while
+     the options inherit the select's light text, leaving only the highlighted
+     option readable. Give options explicit theme colors. */
+  option,
+  optgroup {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
   /* Tailwind 4 resets buttons to cursor: default; bring back the hand cursor
      for everything clickable, and show not-allowed when it's disabled. */
   button,
